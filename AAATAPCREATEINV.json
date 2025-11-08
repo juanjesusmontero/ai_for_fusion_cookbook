@@ -1,0 +1,252 @@
+{
+  "WorkflowCode": "AAATAPCREATEINV",
+  "Name": "AA_AT_AP_CREATE_INV",
+  "Description": "Our AI-assisted agent intelligently automates the payables invoices creation process by reading payables invoices in various formats such as Excel files, and text in the body of an email. By seamlessly translating these inputs into accurate payables invoices in the Financials-ERP system, the agent ensures a high degree of precision and reduces the potential for human error in the order creation process. It will guide users through any necessary validations and confirmations, providing clear messaging and a smooth user experience throughout. Once the agent has enough information to be able to create a payables invoice, it will confirm to the user that it can now go ahead and create a payables invoice before swiftly creating and finalizing the payables invoice in the system, wrapping up with confirmation back to the user of the invoice number which was created. \nUse of this agent will free up time for financials operations teams to focus on higher business value activities.\t",
+  "Family": "FIN",
+  "Product": "OTHER",
+  "UseCaseId": "NA",
+  "SourceWorkflowId": null,
+  "AccessModifier": "public",
+  "Specification": {
+    "jsonSchemaName": "Workflow.spec",
+    "jsonSchemaVersion": "1",
+    "inputs": [],
+    "agentsValueMappings": [
+      {
+        "agentCode": "AAAPCREATEINVOICE",
+        "inputs": []
+      }
+    ],
+    "dataPipeline": {
+      "pipelineNodes": [
+        {
+          "metadata": {
+            "description": "End of data pipeline",
+            "name": "End"
+          },
+          "outcomes": {},
+          "code": "END",
+          "id": "end",
+          "inputs": [],
+          "type": "END"
+        }
+      ],
+      "rootNode": "end",
+      "variables": [],
+      "errorHandlers": [
+        {
+          "type": "EMAIL",
+          "inputs": [
+            {
+              "name": "toList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "ccList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "subject",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "body",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        }
+      ]
+    },
+    "triggers": [
+      {
+        "type": "REST",
+        "inputs": []
+      }
+    ]
+  },
+  "StartQuestionOne": null,
+  "StartQuestionTwo": null,
+  "StartQuestionThree": null,
+  "FollowUpPromptEnabledFlag": false,
+  "FollowUpPrompt": "Based on the following conversion: $param.system_context.chat_history generate $param.system_context.number_of_follow_up_questions\nfollow up questions only while strictly adhering to the JSON Schema format mentioned below. Remove the ```json markdown from the output.\nHere is the JSON Schema format the output should adhere to:\n[{\"question\": \"<put first question generated here>\"}, {\"question\": \"<put second question generated here>\"}, {\"question\": \"<put third question generated here>\"}",
+  "Architecture": "single_agent",
+  "MaximumInteractions": 20,
+  "StartAgentId": null,
+  "agents": [
+    {
+      "AgentCode": "AAAPCREATEINVOICE",
+      "Name": "AA_AP_CREATE_INVOICE",
+      "Description": "An AI assistant that helps financials service representatives automates the payables invoices creation process by gathering required minimum mandatory information for a payables invoice and then using the appropriate AA_TOOL_AP_CREATE_INV tool to create a payables invoicer. \\nEach order will consist of at least one invoice header with one invoice line",
+      "Family": "FIN",
+      "Product": "OTHER",
+      "ModuleId": null,
+      "Namespace": "FIN.OTHER",
+      "PromptCode": null,
+      "Specification": {
+        "jsonSchemaName": "Agent.spec",
+        "jsonSchemaVersion": "1",
+        "agentRole": "",
+        "customFlag": true,
+        "inputs": [],
+        "outputSpecification": " ",
+        "summarizationMode": "Default",
+        "summarizationPrompt": "Based on the information through the chat history and/or tool call responses, construct a clear, professional, and user-friendly answer to address the user's original query.\nconstruct an answer that addresses the user's original query.\nYour answer should be directed towards the user and should be friendly, professional,\nand concise. If you are not able to answer the user's question based on the tool calls or through the chat history,\nyou should let them know that you do not have access to that information.\n\n--ANSWER REQUIREMENTS--\nYour answer should be based only on the information available to you in the tool calling chat\nhistory. You should never invent or make up answers. If the question requires you to synthesize\nanswers across several tool responses, you should do that. Note that some information may need\nto be summarized from across multiple places in a given object. Use your inference and semantic\nknowledge to derive the answer from the data without inventing anything.\n\n--ADDITIONAL REQUIREMENTS--\n* Do not mention tool calls, chat history, underlying operations, or system processes.\n* Keep the response natural and conversational without unnecessary preambles.\n* Provide a direct and engaging response without phrases like \"Based on tool calls\" or similar references.\n* Do not append any characters or trailing Periods (.) at the end of valid URLs.\n* If link is generated by DeepLink tool do not remove from response."
+      },
+      "Version": 12,
+      "MaximumInteractions": 12,
+      "AgentType": "WORKER",
+      "Prompt": "You are an expert Oracle Payables Invoices AI assistant. \nYour job is to generate a full JSON payload for the `Create Payables Invoices Tool` in Oracle Fusion Cloud.\n\nTypes of Customer Questions and Prompts:\n* I have a new payables invoice; can you help me create a payables invoice?\n* What files or details do you need from me to create a new payables invoice?\n* What is the minimum set of information you need to create a payables invoice?\n* Can you create a payables invoice in Oracle Fusion Payables for me?\n* Create a new payables invoice.\n\n####Eligibility Logic:\n\nFor creation of new Orders:\n* Payables invoice is eligible to be created only if all below criteria are met:\n    * Supplier in Oracle has been provided.\n\t* Supplier site in Oracle has been provided.\n    * Business Unit in Oracle has been provided.\n    * Invoice Date has been provided.\n    * Line Number or Numbers in Oracle for the invoice lines - have been provided. \n    * The LineAmount for each invoice line has been provided and greater than or equal to 1\n  Otherwise \n       Politely say that not enough information has been provided for Payables invoice creation and end conversation\n* Partial information (e.g., some invoice lines missing LineType/LineAmount) should trigger a request for the missing info.\n* Only proceed when all required information is provided.\n\nRequirements:\n1. Payables invoice Header\n- Include fields: InvoiceNumber, InvoiceCurrency, InvoiceAmount, InvoiceDate, BusinessUnit, Supplier, SupplierSite, Description\n- Fixed values:\n  InvoiceCurrency: \"USD\"\n\n2. Payables invoice Lines\n- For each line in user input, generate one JSON object with:\n  \n  {\n    \"LineNumber\": \"<increment starting at 1>\",\n    \"LineType\": \"<Line Type from input>\",\n    \"LineAmount\": \"<Line Amount from input>\"\n  }  \n\n\n- Combine all lines under \"invoiceLines\".\n\n3. Combine header and lines into one JSON payload inside the tool call:\n{\n    header,\n    \"invoiceLines\": [ ... ]\n}\n\n4. Instructions for AI Agent:\n- Always call the `create_sales_order_tool` with the above structure.\n- Do not wrap body_template in quotes. It must be a JSON object.\n- Do not include placeholder syntax like {{}}. Use actual values from user input.\n- Validate required fields before creating the order.\n- Line numbers must increment starting at 1.\n- Return only the tool call — no extra explanation or summary.\n- On success creation of a new order in oracle fusion order management always subsequently provide the user with a simple summary table of the newly created order and a link to the order in Fusion Order Management itself. Use the Deep Link tool you have for this.\n\n5. Error Handling\n- Validate each line:\n- Quantity must be positive integer\n- Invoice Date must be a valid future date\n- Duplicate line items → increment line numbers sequentially\n- System failures → retry up to 3 times; if still failing, return structured JSON error with code and message\n- Sanitize all inputs (trim whitespace, ensure numeric types)\n- Include debug info in JSON response if error occurs\n\n6. Optional Fields\n- Include only if user provides values.\n- Omit optional fields (like Comments) if not provided.\n\n7. Performance / Timeout\n- If order creation takes longer than 10 seconds, return partial response with suggestion to retry.\n\nInput Example:\nCreate new payables invoice with details: \nInvoice Number: DEMO_00001 \nInvoice Currency: USD\nInvoice Amount: 2212.75\nInvoice Date: 2019-02-01\nBusiness Unit: US1 Business Unit \nSupplier: ABC Application Software\nSupplier Site: Lee Supremo US\nDescription: ABC Application Software\nLines: \n- Line Type = Item, Line Amount = 2 \n- Line Type = Item, Line Amount = 4 \n- Line Type = Freight, Line Amount = 3 \n\n\n\n**BODY_TEMPLATE EXAMPLE FOR 2 LINES:**\n```json{\n    \"InvoiceNumber\": \"DEMO_00001\",\n    \"InvoiceCurrency\": \"USD\",\n    \"InvoiceAmount\": 2212.75,\n    \"InvoiceDate\": \"2019-02-01\",\n    \"BusinessUnit\": \"Supremo US Business Unit\",\n    \"Supplier\": \"Lee Supplies\",\n    \"SupplierSite\": \"Lee Supremo US\",\n    \"Description\": \"Office Supplies\",\n    \"invoiceLines\": [{\n            \"LineNumber\": 1,\n\t\t\t\"LineType\": \"Item\",\n            \"LineAmount\": 2112.75\n        },\n        {\n            \"LineNumber\": 2,\n            \"LineType\": \"Freight\",\n            \"LineAmount\": 100\n        }\n    ]\n}",
+      "ModelConfigId": null,
+      "ReusableFlag": false,
+      "tools": [
+        {
+          "ToolCode": "PREPAREAPINVDEEPLINK",
+          "Type": "DEEPLINK",
+          "Name": "PREPARE_AP_INV_DEEP_LINK",
+          "Description": "This tool should be used to prepare a deep link for sharing with users after a new payables invoice has been created by the Smart Payables Invoice Entry Assistant",
+          "Family": "FIN",
+          "Product": "OTHER",
+          "SeededFlag": false,
+          "HiddenFlag": false,
+          "ModuleId": null,
+          "Namespace": "FIN.OTHER",
+          "Version": 1,
+          "UserInputRequiredFlag": false,
+          "Specification": {
+            "jsonSchemaName": "Tool.spec",
+            "jsonSchemaVersion": "1"
+          },
+          "UserInputMsg": null,
+          "DeepLinkTool": {
+            "DeepLinkCode": "ORA_FIN_OTHER_VIEWPAYABLESINVOICE",
+            "UsageType": "VbAppUi",
+            "DestinationURL": "/fscmUI/faces/deeplink?objType=AP_VIEWINVOICE&action=VIEW&objKey=InvoiceId={InvoiceId}",
+            "DeepLinkProperties": {
+              "description": "URL to navigate to view payables invoice page",
+              "fixedQuery": "/fscmUI/faces/deeplink?objType=AP_VIEWINVOICE&action=VIEW&objKey=InvoiceId={InvoiceId}",
+              "isSeeded": false,
+              "jsonSchemaName": "DeepLink.deepLinkProperties",
+              "jsonSchemaVersion": 1,
+              "name": "oraFinOtherViewpayablesinvoice",
+              "operationType": "GET",
+              "parameterDefinitions": [
+                {
+                  "dataType": "integer",
+                  "description": "Invoice id",
+                  "name": "InvoiceId",
+                  "queryable": "true",
+                  "sampleValue": 222
+                }
+              ],
+              "resourceType": "ADF_BC_DEEPLINK",
+              "sampleQueries": [
+                {
+                  "query": {
+                    "InvoiceId": 222
+                  },
+                  "description": "URL to navigate to view payables invoice page"
+                }
+              ],
+              "type": "DEEPLINK"
+            },
+            "Family": "FIN",
+            "Product": "OTHER",
+            "Name": "ViewPayablesInvoice",
+            "Description": "URL to navigate to view payables invoice page",
+            "Message": "To view payables invoice click {deepLink} for details"
+          }
+        },
+        {
+          "ToolCode": "AATOOLAPCREATEINV",
+          "Type": "BUS_OBJECT",
+          "Name": "AA_TOOL_AP_CREATE_INV",
+          "Description": "This tool should be invoked when the “Smart Payables invoice Entry Assistant” has enough information to create a payables invoice in Oracle Fusion Payables and it is now necessary to connect with the business object needed to proceed with payables invoice creation",
+          "Family": "FIN",
+          "Product": "OTHER",
+          "SeededFlag": false,
+          "HiddenFlag": false,
+          "ModuleId": null,
+          "Namespace": "FIN.OTHER",
+          "Version": 1,
+          "UserInputRequiredFlag": false,
+          "Specification": {
+            "jsonSchemaName": "Tool.spec",
+            "jsonSchemaVersion": "1"
+          },
+          "UserInputMsg": null,
+          "RestTool": {
+            "ObjectCode": "ORA_FIN_OTHER_AABOAPCREATEINV",
+            "Family": "FIN",
+            "Product": "OTHER",
+            "ObjectSource": "ADF_BC",
+            "Category": null,
+            "RestResourcePath": "/fscmRestApi/resources/11.13.18.05/invoices",
+            "RestResourceIdentifier": "identifier_not_known",
+            "RestSupportedOperations": "{\"allowedOperations\": {\"GET\": true, \"POST\": true, \"PATCH\": true, \"DELETE\": true}}",
+            "ParentSupptObjectId": null,
+            "MandatoryFlag": false,
+            "SeededFlag": false,
+            "ObjectProperties": {
+              "jsonSchemaName": "SupportedBusinessObject.objectProperties",
+              "jsonSchemaVersion": 1,
+              "tools": [
+                {
+                  "bodyTemplate": "{GeneratedPayload}",
+                  "description": "This business object function used within the mart Payables Invoice Entry Assistant business function for creating a payables invoice, describes the actual payload, headers, and parameters which should be used when actually invoking the API of the business function",
+                  "id": 5,
+                  "isNew": true,
+                  "name": "CreateInvoice",
+                  "operationType": "POST",
+                  "parameterDefinitions": [
+                    {
+                      "dataType": "string",
+                      "description": "GeneratedPayload",
+                      "id": 6,
+                      "isToken": true,
+                      "name": "GeneratedPayload"
+                    }
+                  ],
+                  "resourcePath": "/fscmRestApi/resources/11.13.18.05/invoices",
+                  "resourceType": "ADF_BC_FIXED_QUERY",
+                  "sampleQueries": [],
+                  "type": "BUS_OBJECT"
+                }
+              ]
+            },
+            "ObjectDisplayName": "AA_BO_AP_CREATE_INV",
+            "Name": "AA_BO_AP_CREATE_INV",
+            "Description": "This business object should be used to communicate with Oracle Fusion Payables to create a payables invoice."
+          }
+        },
+        {
+          "ToolCode": "ORA_USER_SESSION_TOOL",
+          "Type": "USER_SESSION",
+          "Name": "GetUserSession",
+          "Description": "Tool that fetches the PersonNumber of the logged in user.",
+          "Family": "COMMON",
+          "Product": "OTHER",
+          "SeededFlag": true,
+          "HiddenFlag": false,
+          "ModuleId": "074F58CB6E686D21E0634CA56C64F55F",
+          "Namespace": "COMMON.OTHER",
+          "Version": 1,
+          "UserInputRequiredFlag": false,
+          "Specification": null,
+          "UserInputMsg": null
+        }
+      ],
+      "topics": []
+    }
+  ],
+  "agentMappings": [
+    {
+      "EdgeOrder": 0,
+      "AgentCode": "AAAPCREATEINVOICE",
+      "AgentTargetCode": "AAAPCREATEINVOICE"
+    }
+  ]
+}
