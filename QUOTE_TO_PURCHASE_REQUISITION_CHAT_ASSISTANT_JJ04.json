@@ -1,0 +1,1287 @@
+{
+  "Specification": {
+    "dataPipeline": {
+      "pipelineNodes": [
+        {
+          "metadata": {
+            "description": "Start of data pipeline",
+            "name": "Start"
+          },
+          "outcomes": {
+            "success": "1765413236933"
+          },
+          "code": "START",
+          "id": "start",
+          "inputs": [],
+          "type": "START"
+        },
+        {
+          "metadata": {
+            "description": "End of data pipeline",
+            "name": "End"
+          },
+          "outcomes": {},
+          "code": "END",
+          "id": "end",
+          "inputs": [],
+          "type": "END"
+        },
+        {
+          "metadata": {
+            "name": "Get Intent"
+          },
+          "outcomes": {
+            "success": "1763571221853"
+          },
+          "code": "GET_INTENT",
+          "id": "1763569939518",
+          "inputs": [
+            {
+              "id": "1763569939520_1",
+              "name": "prompt",
+              "type": "string",
+              "value": "You will have the user input as {{$context.$system.$inputMessage}}. Analyze the input and determine the user intent.\nIf the user’s intent is to create a requisition, return \"create\", otherwise return \"other\" in intent.\nDo not provide any explanation or extra text."
+            }
+          ],
+          "outputSpecification": "{\n    \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n    \"type\": \"object\",\n    \"properties\": {\n        \"intent\": {\n            \"type\": \"string\"\n        }\n    }\n}",
+          "type": "LLM"
+        },
+        {
+          "metadata": {
+            "name": "Agent Switcher"
+          },
+          "outcomes": {
+            "create": "1763149997913",
+            "other": "1763757386160"
+          },
+          "code": "AGENT_SWITCHER",
+          "convergenceTargetId": "end",
+          "id": "1763571221853",
+          "inputs": [
+            {
+              "id": "1763571221856_1",
+              "name": "caseExpression",
+              "type": "string",
+              "value": "{{$context.$nodes.GET_INTENT.$output.intent}}"
+            }
+          ],
+          "type": "SWITCH"
+        },
+        {
+          "metadata": {
+            "agentCode": "ORA_REQUISITION_FILE_PROCESSOR_AGENT",
+            "name": "File Processor"
+          },
+          "outcomes": {
+            "success": "1763411960475"
+          },
+          "code": "FILE_PROCESSOR",
+          "id": "1763149997913",
+          "inputs": [
+            {
+              "id": "1763767365662_1",
+              "name": "message",
+              "type": "string",
+              "value": "This is a new request to process a file. Ignore the file content output from MultiFileProcessor tool above. You need to invoke MultiFileProcessor tool again to check for the latest file."
+            }
+          ],
+          "outputSpecification": "{\n    \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n    \"type\": \"object\",\n    \"properties\": {\n        \"fileText\": {\n            \"type\": \"string\"\n        },\n        \"fileName\": {\n            \"type\": \"string\"\n        },\n        \"language\": {\n            \"type\": \"string\"\n        },\n        \"isFileFound\": {\n            \"type\": \"string\"\n        }\n    }\n}",
+          "type": "AGENT"
+        },
+        {
+          "metadata": {
+            "name": "If File Found"
+          },
+          "outcomes": {
+            "true": "1763508258060",
+            "false": "1763412774294"
+          },
+          "code": "IFFILEFOUND",
+          "convergenceTargetId": "end",
+          "id": "1763411960475",
+          "inputs": [
+            {
+              "id": "1763411960477_1",
+              "name": "condition",
+              "type": "string",
+              "value": "{{$context.$nodes.FILE_PROCESSOR.$output.isFileFound === 'Y'}}"
+            }
+          ],
+          "type": "CONDITION"
+        },
+        {
+          "metadata": {
+            "name": "Generate File Not Found Message"
+          },
+          "outcomes": {
+            "success": "end"
+          },
+          "code": "GENERATE_FILE_NOT_FOUND_MESSAGE",
+          "id": "1763412774294",
+          "inputs": [
+            {
+              "id": "1763412774296_1",
+              "name": "prompt",
+              "type": "string",
+              "value": "Present the output in language {{$context.$variables.sessionLanguage}}.\nOutput:\nPlease attach the quote from which a purchase requisition will be created and enter \"Create Requisition\" in the chat window."
+            }
+          ],
+          "type": "LLM"
+        },
+        {
+          "metadata": {
+            "businessObjectCode": "ORA_PRC_SSP_REQUISITIONPREF",
+            "functionName": "get_current_user_active_requisition_preference",
+            "name": "Get Active Requisition Preference"
+          },
+          "outcomes": {
+            "success": "1763756747144"
+          },
+          "code": "GET_ACTIVE_REQUISITION_PREFERENCE",
+          "id": "1763508258060",
+          "inputs": [],
+          "outputSpecification": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"title\": \"RequisitionPreferences\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"items\": {\n      \"type\": \"array\",\n      \"description\": \"List of requisition preference items.\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n         \"RequisitioningBUId\": {\n            \"type\": \"integer\",\n            \"description\": \"Unique identifier for the requisition business unit.\"\n          },\n         \"RequisitioningBU\": {\n            \"type\": \"integer\",\n            \"description\": \"Name of the requisition business unit.\"\n          },\n           \"PersonId\": {\n            \"type\": \"integer\",\n            \"description\": \"Unique identifier for the person.\"\n          },\n          \"RequesterId\": {\n            \"type\": \"integer\",\n            \"description\": \"Unique identifier for the person making the request.\"\n          },\n          \"DeliverToLocationId\": {\n            \"type\": \"integer\",\n            \"description\": \"ID of the location to which the item should be delivered.\"\n          },\n          \"DestinationOrganizationId\": {\n            \"type\": \"integer\",\n            \"description\": \"ID of the destination organization.\"\n          },\n          \"DestinationTypeCode\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \"EXPENSE\",\n              \"INVENTORY\"\n            ],\n            \"description\": \"Type of destination (e.g., EXPENSE, INVENTORY).\"\n          },\n          \"requisitioningOptions\": {\n            \"type\": \"array\",\n            \"description\": \"List of requisitioning options.\",\n            \"items\": {\n              \"type\": \"object\",\n              \"properties\": {\n                \"RequestedDeliveryDateOffset\": {\n                  \"type\": \"string\",\n                  \"description\": \"Offset for the requested delivery date.\"\n                }\n              },\n              \"required\": [\n                \"RequestedDeliveryDateOffset\"\n              ]\n            }\n          }\n        },\n        \"required\": [\n          \"PersonId\",\n          \"RequesterId\",\n          \"DeliverToLocationId\",\n          \"DestinationOrganizationId\",\n          \"DestinationTypeCode\",\n          \"requisitioningOptions\"\n        ]\n      }\n    },\n    \"count\": {\n      \"type\": \"integer\",\n      \"description\": \"Total count of items.\"\n    },\n    \"hasMore\": {\n      \"type\": \"boolean\",\n      \"description\": \"Flag indicating if there are more items.\"\n    },\n    \"limit\": {\n      \"type\": \"integer\",\n      \"description\": \"Maximum number of items per request.\"\n    },\n    \"offset\": {\n      \"type\": \"integer\",\n      \"description\": \"Offset for paginated data.\"\n    },\n    \"links\": {\n      \"type\": \"array\",\n      \"description\": \"List of related links.\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"rel\": {\n            \"type\": \"string\",\n            \"description\": \"Relation type of the link.\"\n          },\n          \"href\": {\n            \"type\": \"string\",\n            \"format\": \"uri\",\n            \"description\": \"URL of the linked resource.\"\n          },\n          \"name\": {\n            \"type\": \"string\",\n            \"description\": \"Name of the link.\"\n          },\n          \"kind\": {\n            \"type\": \"string\",\n            \"description\": \"Type of link (e.g., collection, other).\"\n          }\n        },\n        \"required\": [\"rel\", \"href\", \"name\", \"kind\"]\n      }\n    }\n  },\n  \"required\": [\n    \"items\",\n    \"count\",\n    \"hasMore\",\n    \"limit\",\n    \"offset\",\n    \"links\"\n  ]\n}",
+          "type": "BO_FUNCTION"
+        },
+        {
+          "metadata": {
+            "name": "If Success"
+          },
+          "outcomes": {
+            "true": "1763589067966",
+            "false": "1763589659656"
+          },
+          "code": "IF_SUCCESS",
+          "convergenceTargetId": "end",
+          "id": "1763588969388",
+          "inputs": [
+            {
+              "id": "1763588969390_1",
+              "name": "condition",
+              "type": "string",
+              "value": "{{$context.$nodes.FILE_PROCESSOR.$output.isFileFound === 'Y'}}"
+            }
+          ],
+          "type": "CONDITION"
+        },
+        {
+          "metadata": {
+            "name": "Summarize the Requisition"
+          },
+          "outcomes": {
+            "success": "1763589311972"
+          },
+          "code": "SUMMARIZE_THE_REQUISITION",
+          "id": "1763589067966",
+          "inputs": [
+            {
+              "id": "1763589067967_1",
+              "name": "prompt",
+              "type": "string",
+              "value": "You will have the data of requisition along with lines information in {{$context.$nodes.EXTRACT_REQUISITION_ATTRIBUTES_FROM_SUPPLIER_QUOTATION.$output}} . Using this information, output:\nThe quote is from [[Supplier name]], with [[Number of lines]] lines and a total of [[Total Requisition Amount]]. Do you want to proceed to create the requisition?\nIf the supplier name is not present, use the file name.\nReplace all bracketed placeholders with actual values. Do not include any extra commentary or explanation.\nPresent the output in language {{$context.$variables.sessionLanguage}}."
+            }
+          ],
+          "outputSpecification": "{\n    \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n    \"type\": \"object\",\n    \"properties\": {\n        \"summary\": {\n            \"type\": \"string\"\n        }\n    }\n}",
+          "type": "LLM"
+        },
+        {
+          "metadata": {
+            "channelType": "CHAT",
+            "feedbackEnabledFlag": false,
+            "name": "Get Feedback"
+          },
+          "outcomes": {
+            "success": "1763590984998"
+          },
+          "code": "GET_FEEDBACK",
+          "id": "1763589311972",
+          "inputs": [
+            {
+              "value": {
+                "messageTemplate": {
+                  "message": "{{$context.$nodes.SUMMARIZE_THE_REQUISITION.$output.summary}}"
+                }
+              },
+              "name": "chatChannelInput",
+              "type": "object"
+            }
+          ],
+          "type": "HUMAN"
+        },
+        {
+          "metadata": {
+            "name": "Generate Failure Message"
+          },
+          "outcomes": {
+            "success": "end"
+          },
+          "code": "GENERATE_FAILURE_MESSAGE",
+          "id": "1763589659656",
+          "inputs": [
+            {
+              "id": "1763589659657_1",
+              "name": "prompt",
+              "type": "string",
+              "value": "You are provided with requisition data in {{$context.$nodes.EXTRACT_REQUISITION_ATTRIBUTES_FROM_SUPPLIER_QUOTATION.$output}} . Extract the following fields if available:\n\nSupplier Name: {{$context.$nodes.EXTRACT_REQUISITION_ATTRIBUTES_FROM_SUPPLIER_QUOTATION.$output.header.NormalizedSupplierName}} \nQuotation Number: {{$context.$nodes.EXTRACT_REQUISITION_ATTRIBUTES_FROM_SUPPLIER_QUOTATION.$output.header.QuotationNumber}} \nFile Name: {{$context.$nodes.EXTRACT_REQUISITION_ATTRIBUTES_FROM_SUPPLIER_QUOTATION.$output.header.AttachmentFileName}} \nGenerate an error message for a failed purchase requisition with the following logic:\n\nIf both Supplier Name and Quotation Number are present, output:\nThere was an error creating a purchase requisition based on the quotation from [[Supplier Name]] ([[Quotation Number]]).\nIf either Supplier Name or Quotation Number is missing, output:\nThere was an error creating a purchase requisition from the file [[File Name]].\nReplace the bracketed items with the actual values from {{$context.$nodes.EXTRACT_REQUISITION_ATTRIBUTES_FROM_SUPPLIER_QUOTATION.$output}}. Do not include any extra commentary or explanation.\nPresent the output in language {{$context.$variables.sessionLanguage}}."
+            }
+          ],
+          "type": "LLM"
+        },
+        {
+          "metadata": {
+            "name": "If Approved"
+          },
+          "outcomes": {
+            "true": "1768558492972",
+            "false": "1763591487133"
+          },
+          "code": "IF_APPROVED",
+          "convergenceTargetId": "end",
+          "id": "1763590984998",
+          "inputs": [
+            {
+              "id": "1763590984999_1",
+              "name": "condition",
+              "type": "string",
+              "value": "{{$context.$nodes.GET_FEEDBACK.$output === 'APPROVED'}}"
+            }
+          ],
+          "type": "CONDITION"
+        },
+        {
+          "metadata": {
+            "name": "Generate Success Message"
+          },
+          "outcomes": {
+            "success": "end"
+          },
+          "code": "GENERATE_SUCCESS_MESSAGE",
+          "id": "1763591386835",
+          "inputs": [
+            {
+              "id": "1763591386837_1",
+              "name": "prompt",
+              "type": "string",
+              "value": "Using the requisition number from {{$context.$nodes.CREATE_PURCHASE_REQUISITION.$output.Requisition}} and the deep link URL from {{$context.$nodes.GENERATE_REQUISITION_DEEP_LINK.$output.deeplink}}, generate a message in HTML letting the user know the requisition has been created and can access the requisition form the deeplink. The requisition number should be a clickable hyperlink pointing to the deep link URL.\nYou are provided with the following variables:\n\nRequisition Number: {{$context.$nodes.CREATE_PURCHASE_REQUISITION.$output.Requisition}}\nDeeplink: {{$context.$nodes.GENERATE_REQUISITION_DEEP_LINK.$output.deeplink}}\nTax Status: {{$context.$nodes.CALCULATE_TAX_AND_DERIVE_CHARGE_ACCOUNT.$status}} \nSupplier Name: {{$context.$nodes.EXTRACT_REQUISITION_ATTRIBUTES_FROM_SUPPLIER_QUOTATION.$output.header.NormalizedSupplierName}} \nQuotation Number: {{$context.$nodes.EXTRACT_REQUISITION_ATTRIBUTES_FROM_SUPPLIER_QUOTATION.$output.header.QuotationNumber}} \nFile Name: {{$context.$nodes.EXTRACT_REQUISITION_ATTRIBUTES_FROM_SUPPLIER_QUOTATION.$output.header.AttachmentFileName}} \nGenerate a completion message using this logic:\n\nAlways display the requisition number as a hyperlink using Requisition Number and Deeplink. If the deeplink is undefined or null, just use Requisition Number without hyperlink.\nIf both Supplier Name and Quotation Number are present, output this:\nYour purchase requisition [[Requisition Number/Deeplink]] has been successfully created based on the quotation from [Supplier Name] ([Quotation Number]).\nIf either Supplier Name or Quotation Number is missing, output this:\nYour purchase requisition [[Requisition Number/Deeplink]] has been successfully created from the file [File Name].\nIf Tax Status value is \"failure\", append this sentence on a new line:\nHowever, we encountered an error computing the tax.\nReplace all bracketed placeholders with actual values. Do not include any extra commentary or explanation.\nPresent the output in language {{$context.$variables.sessionLanguage}}."
+            }
+          ],
+          "type": "LLM"
+        },
+        {
+          "metadata": {
+            "name": "Feedback Rejected"
+          },
+          "outcomes": {
+            "success": "end"
+          },
+          "code": "FEEDBACK_REJECTED",
+          "id": "1763591487133",
+          "inputs": [
+            {
+              "id": "1763591487134_1",
+              "name": "prompt",
+              "type": "string",
+              "value": "Present the output in language {{$context.$variables.sessionLanguage}}.\nOutput:\nRequisition creation cancelled. To start again, please upload a supplier quotation and enter \"Create Requisition\" in the chat window."
+            }
+          ],
+          "type": "LLM"
+        },
+        {
+          "metadata": {
+            "businessObjectCode": "ORA_SCM_SCMFOUNDAT_GETUOM",
+            "functionName": "GetActiveUOMByLocale",
+            "name": "Fetch Active Fusion UOMs"
+          },
+          "outcomes": {
+            "success": "1763756818472"
+          },
+          "code": "FETCH_ACTIVE_FUSION_UOMS",
+          "id": "1763756747144",
+          "inputs": [
+            {
+              "id": "1764015318434_1",
+              "name": "plimit",
+              "type": "integer",
+              "value": "250"
+            },
+            {
+              "id": "1764015318436_2",
+              "name": "locale",
+              "type": "string",
+              "value": "{{$context.$nodes.FILE_PROCESSOR.$output.language}}"
+            }
+          ],
+          "outputSpecification": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"title\": \"InternalUOMList\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"internal_uom_list\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"UOMCode\": {\n            \"type\": \"string\"\n          },\n          \"UOM\": {\n            \"type\": \"string\"\n          },\n          \"Description\": {\n            \"type\": \"string\"\n          },\n          \"UOMClassName\": {\n            \"type\": \"string\"\n          }\n        },\n        \"required\": [\"UOMCode\", \"UOM\", \"Description\", \"UOMClassName\"]\n      }\n    }\n  },\n  \"required\": [\"internal_uom_list\"]\n}",
+          "type": "BO_FUNCTION"
+        },
+        {
+          "metadata": {
+            "businessObjectCode": "ORA_SCM_SCMFOUNDAT_GETCURRENCY",
+            "functionName": "GetActiveCurrenciesByLocale",
+            "name": "Fetch Active Fusion Currencies"
+          },
+          "outcomes": {
+            "success": "1763756872125"
+          },
+          "code": "FETCH_ACTIVE_FUSION_CURRENCIES",
+          "id": "1763756818472",
+          "inputs": [
+            {
+              "id": "1764015370502_1",
+              "name": "plimit",
+              "type": "integer",
+              "value": "250"
+            },
+            {
+              "id": "1764015370504_2",
+              "name": "locale",
+              "type": "string",
+              "value": "{{$context.$nodes.FILE_PROCESSOR.$output.language}}"
+            }
+          ],
+          "outputSpecification": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"items\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"CurrencyCode\": {\n            \"type\": \"string\"\n          },\n          \"Name\": {\n            \"type\": \"string\"\n          },\n          \"Description\": {\n            \"type\": \"string\"\n          },\n          \"Symbol\": {\n            \"type\": [\"string\", \"null\"]\n          }\n        },\n        \"required\": [\"CurrencyCode\", \"Name\", \"Description\", \"Symbol\"]\n      }\n    }\n  },\n  \"required\": [\"items\"]\n}",
+          "type": "BO_FUNCTION"
+        },
+        {
+          "metadata": {
+            "name": "Extract Requisition Attributes from Supplier Quotation"
+          },
+          "outcomes": {
+            "success": "1763756933051"
+          },
+          "code": "EXTRACT_REQUISITION_ATTRIBUTES_FROM_SUPPLIER_QUOTATION",
+          "id": "1763756872125",
+          "inputs": [
+            {
+              "id": "1763756872128_1",
+              "name": "prompt",
+              "type": "string",
+              "value": "### EXTRACTION CHALLENGE:\nYou're analyzing the following supplier quotation document with varied formats. {{$context.$nodes.FILE_PROCESSOR.$output.fileText}}\n\nThe document consists of header information and line information. \na. Header information can appear anywhere in the document and in any format.\nb. Line information can appear in different structures:\n- Formal tables with borders\n- Invisible tables (aligned text without visible borders)\n- Lists with pricing information\n- Indented hierarchical items (parent items with sub-items)\n- Items spanning multiple lines or multiple pages\n- Do not include item from the Summary table\n\n###IMPORTANT INSTRUCTION:\nOnly extract and return values that are explicitly present in the supplier quotation document. If any attribute or value cannot be found in the document, set the value to null. You must not assume or fabricate any information for any field. Only use content found directly in the document.\n\n ### COMPREHENSIVE EXTRACTION STRATEGY:\n1. Scan the ENTIRE document, not just the top portion\n2. Look for supplier information in all possible locations\n3. Pay attention to indentation and formatting that indicates hierarchical relationships\n4. Look for totals and subtotals to verify your extraction accuracy\n5. Do not add any items that are not mentioned in the quotation document\n6. If a line item or description includes more than one cost component (such as labor, parts, sublet, or miscellaneous), extract each component as a separate line in    the output by indicating the cost type in the item description and using the appropriate line type. Also, create separate line items for any miscellaneous expenses you find in the document. However, do not include tax-related items such as \"GST\", \"VAT\", \"sales tax\" or any line that explicitly mentions a tax or tax percentage.\n    \nThese are the attributes for the header:\n1. PreparerId: {{$context.$nodes.GET_ACTIVE_REQUISITION_PREFERENCE.$output.items[0].PersonId}}\n2. Description: Provide summary of the document and include the quotation number and company issuing the quotation. It must not exceed 240 characters. \n3. SupplierName: Name of the company issuing the supplier quotation document. This is the company providing the goods or services. Look for this information only in clearly labeled areas such as headers, footers, or text mentioning \"Supplier,\" \"Vendor,\" \"From,\" or company information next to the quotation title or logo text. Never extract names or addresses from sections labeled \"Customer\", \"Client\", \"Bill To\", \"Ship To\", \"Sold To\" or any similar recipient fields. If you are unsure whether the company name is the supplier, leave SupplierName blank and do not extract any supplier-related fields in either header or line information.\n4. NormalizedSupplierName: Please create a shortened, standardized version of this supplier name by:\n- Removing corporate designations (LLC, Inc, Corp, Corporation, Ltd, Limited, etc.)\n- Removing subsidiary indicators (A division of, A subsidiary of, etc.)\n- Removing regional identifiers (North America, USA, etc.) unless they are critical to identify the company\n- Standardizing common abbreviations (Intl -> International, Mfg -> Manufacturing)\n- Keeping the core business name that would be recognizable\n\n5. SupplierContact: Name of the supplier contact. It must not exceed 80 characters.\n6. SupplierContactEmail: contact email address of the company issuing the document.\n7. SupplierContactEmailDomain:  Extract the email domain from supplier contact email if it is not from the public email domain. Otherwise, set this to null.  \n8. SupplierSite: Location of the supplier associated with the quotation. This may refer to the supplier’s physical address, branch, or facility responsible for fulfilling the order. When identifying the SupplierSite, prioritize the location responsible for fulfilling the order, found under sections like \"Send Orders To\" or \"Issue PO To\".\n9. SupplierContactPhone: Phone number of the company issuing the document.\n10. SupplierContactFax: Fax number of the company issuing the document.\n11. CurrencyCode: Steps to find currency match:\n- Look for Currency field and Currency symbol from the quotation document\n- If currency is not explicitly defined, determine the country from the supplier address and use the local currency of that country.\n- Find the matching entry from the list of internal currencies {{$context.$nodes.FETCH_ACTIVE_FUSION_CURRENCIES.$output}} \n12. QuotationNumber: A unique identifier assigned to the supplier's quotation.\n13. AttachmentFileName: {{$context.$nodes.FILE_PROCESSOR.$output.fileName}} \n14. Justification: Justification from the quotation document.\n\nThese are the attributes for the lines:\n1. Line Number: Generate sequence in the order the item appears in the document.\n2. ItemDescription: Description of the item. It must not exceed 240 characters. \n3. SupplierItemNumber: Number that identifies the supplier for the goods or services provided in the quotation. Only populate this if the SupplierName is not blank.\n4. UOM: Get the Unit of Measure of the quantity on the line.\n5. LineTypeCode: Based on the itemDescription, determine the most appropriate LineTypeCode for Oracle Fusion Applications. Only choose one of these codes: \"Goods\", \"Fixed Price Services\", \"ORA_Rate Based Services\".\n6. Quantity: If the quantity is not provided, default to 1. Quantity must not be null for \"Goods\" and \"Rate Based Services\" lineType.\n7. Unit Price: Number that identifies unit price of the item. It may be labeled as \"Price\", \"Unit Price\", \"Customer price\" or \"Rate\". Extract the numeric value regardless of whether the currency symbol is present or not. If there is no price for an item with line type as \"Fixed Price Services\", do not create a line for this item.\n8. ManufacturerName: Manufacturer name of the item.Extract ManufacturerName by carefully identifying manufacturer information based on the item description or explicitly labeled fields.\n9. ManufacturerPartNumber: Manufacturer part number. Only populate this if ManufacturerName is also present for that line.\n10. CurrencyCode: default to \"USD\".\n11. RequesterId: {{$context.$nodes.GET_ACTIVE_REQUISITION_PREFERENCE.$output.items[0].RequesterId}}\n12. DestinationTypeCode: {{$context.$nodes.GET_ACTIVE_REQUISITION_PREFERENCE.$output.items[0].DestinationTypeCode}}\n13. DestinationOrganizationId: {{$context.$nodes.GET_ACTIVE_REQUISITION_PREFERENCE.$output.items[0].DestinationOrganizationId}}\n14. DeliverToLocationId: {{$context.$nodes.GET_ACTIVE_REQUISITION_PREFERENCE.$output.items[0].DeliverToLocationId}}"
+            }
+          ],
+          "outputSpecification": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"header\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"PreparerId\": { \"type\": \"string\" },\n        \"RequisitionDescription\": { \"type\": \"string\" },\n        \"SupplierNameFromDocument\": { \"type\": \"string\" },\n        \"NormalizedSupplierName\": { \"type\": \"string\" },\n        \"SupplierContactEmail\": { \"type\": \"string\", \"format\": \"email\" },\n        \"SupplierContact\": { \"type\": \"string\" },\n        \"SupplierContactPhone\": { \"type\": \"string\" },\n        \"SupplierContactFax\": { \"type\": \"string\" },\n        \"SupplierSite\": { \"type\": \"string\" },\n        \"SupplierContactEmailDomain\": { \"type\": \"string\" },\n        \"CurrencyCode\": { \"type\": \"string\" },\n        \"QuotationNumber\": { \"type\": \"string\" },\n        \"Date\": { \"type\": \"string\" },\n        \"Justification\": { \"type\": \"string\" },\n        \"AttachmentFileName\": { \"type\": \"string\" }\n      },\n      \"required\": [\n        \"PreparerId\",\n        \"RequisitionDescription\",\n        \"SupplierNameFromDocument\",\n        \"NormalizedSupplierName\",\n        \"SupplierContactEmail\",\n        \"SupplierContact\",\n        \"SupplierContactPhone\",\n        \"SupplierContactFax\",\n        \"SupplierSite\",\n        \"SupplierContactEmailDomain\",\n        \"CurrencyCode\",\n        \"AttachmentFileName\"\n      ]\n    },\n    \"lines\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"LineNumber\": { \"type\": \"string\" },\n\t\t\t\"CurrencyCode\": { \"type\": \"string\" },\t\n\t\t\t\"RequesterId\": { \"type\": \"string\" },\n\t\t\t\"DestinationTypeCode\": { \"type\": \"string\" },\n\t\t\t\"DestinationOrganizationId\": { \"type\": \"string\" },\n\t\t\t\"DeliverToLocationId\": { \"type\": \"string\" },\n          \"CategoryName\": { \"type\": \"string\" },\n          \"ItemDescription\": { \"type\": \"string\" },\n          \"SupplierItemNumber\": { \"type\": \"string\" },\n          \"Quantity\": { \"type\": \"number\" },\n          \"UOM\": { \"type\": \"string\" },\n          \"Price\": { \"type\": \"number\" },\n          \"LineTypeCode\": { \"type\": \"string\" },\n          \"ManufacturerName\": { \"type\": \"string\" },\n          \"ManufacturerPartNumber\": { \"type\": \"string\" }\n        },\n        \"required\": [\n          \"LineNumber\",\n          \"ItemDescription\",\n          \"Price\",\n          \"LineTypeCode\"\n        ]\n      }\n    }\n  },\n  \"required\": [\"header\", \"lines\"]\n}",
+          "type": "LLM"
+        },
+        {
+          "metadata": {
+            "name": "Map Derived UOMs to Fusion UOMs"
+          },
+          "outcomes": {
+            "success": "1763588969388"
+          },
+          "code": "MAP_DERIVED_UOMS_TO_FUSION_UOMS",
+          "id": "1763756933051",
+          "inputs": [
+            {
+              "id": "1763756933054_1",
+              "name": "prompt",
+              "type": "string",
+              "value": "You are a buyer creating a purchase requisition from a supplier quotation. Each supplier-provided Unit of Measure (UOM) must be mapped to a valid UOMCode from the internal system’s list.\n\nTASK:\nFor each line in {{$context.$nodes.EXTRACT_REQUISITION_ATTRIBUTES_FROM_SUPPLIER_QUOTATION.$output}}, update the UOM field so that it matches the UOMCode of one of the entries in the internal UOM list: {{$context.$nodes.FETCH_ACTIVE_FUSION_UOMS.$output.internal_uom_list}} \n\nFollow these STRICT RULES:\n- The internal UOM list contains two relevant fields:\n1. \"UOM\": This is the UOM description (provided in {{$context.$nodes.FILE_PROCESSOR.$output.language}}).\n2. \"UOMCode\": This is the internal code you must output.\n- Always map the supplier’s UOM to an internal \"UOMCode\" by matching it with the meaning in the \"UOM\" field.\n- DO NOT invent new UOM codes, abbreviations, or use any UOM or \"UOMCode\" not explicitly present in the internal UOM list—even if the supplier UOM does not have a direct match.\n- If the supplier’s UOM is not available in the internal list, select the closest or most semantically appropriate \"UOMCode\" from the available internal UOMs. Refer to the line’s item description if needed to determine the best match.\n- Always return only a JSON array of the updated line items. Each entry must have its \"UOMCode\" field populated ONLY with a value from the internal UOM list’s \"UOMCode\" field.\n- Output nothing except the required JSON array—no explanations, extra text, or commentary.\n- If no reasonable match exists, select the internal UOMCode that is least likely to cause data entry errors, and never fabricate codes.\n- Any UOMCode in the output MUST exist in the provided internal UOM list."
+            }
+          ],
+          "outputSpecification": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"header\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"PreparerId\": { \"type\": \"string\" },\n        \"RequisitionDescription\": { \"type\": \"string\" },\n        \"SupplierNameFromDocument\": { \"type\": \"string\" },\n        \"NormalizedSupplierName\": { \"type\": \"string\" },\n        \"SupplierContactEmail\": { \"type\": \"string\", \"format\": \"email\" },\n        \"SupplierContact\": { \"type\": \"string\" },\n        \"SupplierContactPhone\": { \"type\": \"string\" },\n        \"SupplierContactFax\": { \"type\": \"string\" },\n        \"SupplierSite\": { \"type\": \"string\" },\n        \"SupplierContactEmailDomain\": { \"type\": \"string\" },\n        \"CurrencyCode\": { \"type\": \"string\" },\n        \"QuotationNumber\": { \"type\": \"string\" },\n        \"Date\": { \"type\": \"string\" },\n        \"AttachmentFileName\": { \"type\": \"string\" }\n      },\n      \"required\": [\n        \"PreparerId\",\n        \"RequisitionDescription\",\n        \"SupplierNameFromDocument\",\n        \"NormalizedSupplierName\",\n        \"SupplierContactEmail\",\n        \"SupplierContact\",\n        \"SupplierContactPhone\",\n        \"SupplierContactFax\",\n        \"SupplierSite\",\n        \"SupplierContactEmailDomain\",\n        \"CurrencyCode\",\n        \"AttachmentFileName\"\n      ]\n    },\n    \"lines\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"LineNumber\": { \"type\": \"string\" },\n          \"CategoryName\": { \"type\": \"string\" },\n          \"ItemDescription\": { \"type\": \"string\" },\n          \"SupplierItemNumber\": { \"type\": \"string\" },\n          \"Quantity\": { \"type\": \"number\" },\n          \"UOMCode\": { \"type\": \"string\" },\n          \"Price\": { \"type\": \"number\" },\n          \"LineTypeCode\": { \"type\": \"string\" },\n          \"ManufacturerName\": { \"type\": \"string\" },\n          \"ManufacturerPartNumber\": { \"type\": \"string\" }\n        },\n        \"required\": [\n          \"LineNumber\",\n          \"ItemDescription\",\n          \"Price\",\n          \"LineTypeCode\"\n        ]\n      }\n    }\n  },\n  \"required\": [\"header\", \"lines\"]\n}",
+          "type": "LLM"
+        },
+        {
+          "metadata": {
+            "name": "Generate Message For Other Intent"
+          },
+          "outcomes": {
+            "success": "end"
+          },
+          "code": "OTHER_INTENT",
+          "id": "1763757386160",
+          "inputs": [
+            {
+              "id": "1763757386162_1",
+              "name": "prompt",
+              "type": "string",
+              "value": "Present the output in language {{$context.$variables.sessionLanguage}}.\nOutput:\nI can only assist with creating requisitions from an uploaded supplier quotation. Attach the quote from which a purchase requisition will be created and enter \"Create Requisition\" in the chat window."
+            }
+          ],
+          "type": "LLM"
+        },
+        {
+          "metadata": {
+            "agentCode": "ORA_GENERATE_REQUISITION_DEEP_LINK",
+            "errorNodeId": "1763591175314",
+            "name": "Generate Requisition Deep Link"
+          },
+          "outcomes": {
+            "success": "1763591386835"
+          },
+          "code": "GENERATE_REQUISITION_DEEP_LINK",
+          "convergenceTargetId": "1763591175314",
+          "id": "1763591267793",
+          "inputs": [
+            {
+              "id": "1763591277944_1",
+              "name": "message",
+              "type": "string",
+              "value": "{{\"Create a deeplink for requisition \"+ $context.$nodes.CREATE_PURCHASE_REQUISITION.$output.Requisition}}"
+            },
+            {
+              "id": "1763591277944_2",
+              "name": "RequisitionHeaderId",
+              "type": "integer",
+              "value": "{{$context.$nodes.ATCREATEPURCHASEREQ.$output.RequisitionHeaderId}}"
+            }
+          ],
+          "outputSpecification": "{\n    \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n    \"type\": \"object\",\n    \"properties\": {\n        \"deeplink\": {\n            \"type\": \"string\"\n        }\n    }\n}",
+          "type": "AGENT"
+        },
+        {
+          "metadata": {
+            "businessObjectCode": "ORA_HCM_SELF_DETAIL_OBJECT",
+            "functionName": "getUserSession",
+            "name": "Get User Session Information"
+          },
+          "outcomes": {
+            "success": "1765488647094"
+          },
+          "code": "GET_USER_SESSION_INFORMATION",
+          "id": "1765413236933",
+          "inputs": [],
+          "outputSpecification": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"items\": {\n      \"type\": \"array\",\n      \"minItems\": 1,\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"PersonNumber\": { \"type\": \"string\" },\n          \"Username\": { \"type\": \"string\" },\n          \"DisplayName\": { \"type\": \"string\" },\n          \"FirstName\": { \"type\": [\"string\", \"null\"] },\n          \"LastName\": { \"type\": \"string\" },\n          \"Currency\": { \"type\": \"string\" },\n          \"DateFormat\": { \"type\": \"string\" },\n          \"DecimalSeparator\": { \"type\": \"string\", \"maxLength\": 1 },\n          \"FontSize\": { \"type\": \"string\", \"enum\": [\"SMALL\", \"MEDIUM\", \"LARGE\"] },\n          \"GroupingSeparator\": { \"type\": \"string\", \"maxLength\": 1 },\n          \"Language\": { \"type\": \"string\" },\n          \"NumberFormat\": { \"type\": \"string\" },\n          \"Territory\": { \"type\": \"string\" },\n          \"TimeFormat\": { \"type\": \"string\" },\n          \"TimeZone\": { \"type\": \"string\" },\n          \"DefaultLanguage\": { \"type\": \"string\" },\n          \"DisplayNameLanguage\": { \"type\": \"string\" }\n        },\n        \"required\": [\n          \"PersonNumber\",\n          \"Username\",\n          \"DisplayName\",\n          \"FirstName\",\n          \"LastName\",\n          \"Currency\",\n          \"DateFormat\",\n          \"DecimalSeparator\",\n          \"FontSize\",\n          \"GroupingSeparator\",\n          \"Language\",\n          \"NumberFormat\",\n          \"Territory\",\n          \"TimeFormat\",\n          \"TimeZone\",\n          \"DefaultLanguage\",\n          \"DisplayNameLanguage\"\n        ],\n        \"additionalProperties\": false\n      }\n    }\n  },\n  \"required\": [\"items\"],\n  \"additionalProperties\": false\n}",
+          "type": "BO_FUNCTION"
+        },
+        {
+          "metadata": {
+            "name": "Set session variables"
+          },
+          "outcomes": {
+            "success": "1763569939518"
+          },
+          "code": "SET_SESSION_VARIABLES",
+          "id": "1765488647094",
+          "inputs": [
+            {
+              "id": "1765488662440",
+              "name": "sessionLanguage",
+              "type": "string",
+              "value": "{{$context.$nodes.GET_USER_SESSION_INFORMATION.$output.items[0].Language}}"
+            }
+          ],
+          "type": "SET_FIELDS"
+        },
+        {
+          "metadata": {
+            "businessObjectCode": "ORA_PRC_SSP_AACREATEPURCHASEREQ",
+            "functionName": "create_purchase_requisition",
+            "name": "AT_CREATE_PURCHASE_REQ"
+          },
+          "outcomes": {
+            "success": "1763591267793"
+          },
+          "code": "ATCREATEPURCHASEREQ",
+          "id": "1768558492972",
+          "inputs": [
+            {
+              "id": "1768646465398_1",
+              "name": "pRequisitioningBUId",
+              "type": "string",
+              "value": "{{$context.$nodes.GET_ACTIVE_REQUISITION_PREFERENCE.$output.items[0].RequisitioningBUId}}"
+            },
+            {
+              "id": "1768646465401_2",
+              "name": "pPreparerId",
+              "type": "string",
+              "value": "{{$context.$nodes.EXTRACT_REQUISITION_ATTRIBUTES_FROM_SUPPLIER_QUOTATION.$output.header.PreparerId}}"
+            },
+            {
+              "id": "1768646465407_3",
+              "name": "pJustification",
+              "type": "string",
+              "value": "{{$context.$nodes.EXTRACT_REQUISITION_ATTRIBUTES_FROM_SUPPLIER_QUOTATION.$output.header.Justification}}"
+            },
+            {
+              "id": "1768646465411_4",
+              "name": "pLines",
+              "type": "string",
+              "value": "{{$context.$nodes.EXTRACT_REQUISITION_ATTRIBUTES_FROM_SUPPLIER_QUOTATION.$output.lines}}"
+            }
+          ],
+          "outputSpecification": "{\n\t\"$schema\": \"http://json-schema.org/draft-07/schema# \",\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"RequisitionHeaderId\": {\n\t\t\t\"type\": \"number\"\n\t\t},\n\t\t\"Requisition\": {\n\t\t\t\"type\": \"string\"\n\t\t}\n\t},\n\t\"required\": [\n\t\t\"RequisitionHeaderId\",\n\t\t\"Requisition\"\n\t]\n}",
+          "type": "BO_FUNCTION"
+        }
+      ],
+      "rootNode": "start",
+      "variables": [
+        {
+          "id": "1765488528441",
+          "name": "sessionLanguage",
+          "type": "string"
+        }
+      ],
+      "errorHandlers": [
+        {
+          "type": "EMAIL",
+          "inputs": [
+            {
+              "name": "toList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "ccList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "subject",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "body",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        }
+      ]
+    },
+    "jsonSchemaName": "Workflow.spec",
+    "jsonSchemaVersion": "1",
+    "inputs": [],
+    "outputSpecification": " ",
+    "agentsValueMappings": [],
+    "humanApprovalFlag": true,
+    "triggers": [
+      {
+        "type": "REST",
+        "inputs": []
+      }
+    ],
+    "deletedTriggerTypes": [],
+    "chatExpLocalFileUploadEnabledFlag": true,
+    "chatExpTPFileUploadEnabledFlag": false,
+    "chatExpThirdPartyDetails": []
+  },
+  "dependencies": {
+    "boFunctionNodes": [
+      {
+        "ObjectProperties": {
+          "jsonSchemaName": "SupportedBusinessObject.objectProperties",
+          "jsonSchemaVersion": 1,
+          "tools": [
+            {
+              "bodyTemplate": "",
+              "description": "Finds the active preference of type Self Service Procurement for the logged in user according to the user's requisition preferences.",
+              "id": 3,
+              "isNew": false,
+              "name": "get_active_requisition_preference_by_person",
+              "operationType": "GET",
+              "parameterDefinitions": [
+                {
+                  "dataType": "string",
+                  "description": "Person unique identifier ",
+                  "id": 3,
+                  "isToken": true,
+                  "name": "personId"
+                }
+              ],
+              "resourcePath": "/fscmRestApi/resources/11.13.18.05/requisitionPreferences?q=PersonId={personId}  AND ActivePreferenceFlag='Y'&expand=all&fields=PreferenceType,DeliverToCustomerLocationId,DeliverToLocationId,DeliverToLocationCode,DeliverToLocationName,DestinationOrganizationId,DestinationOrganizationCode,DestinationOrganization,InvOrgEnabledForProjectTracking,DestinationType,DestinationTypeCode,DestinationSubinventory,PersonId,PreferenceType,Requester,RequesterId,RequisitioningBU,SetId,RequisitioningBUId,UserPreferenceId,RequisitionBUOptionsOrganizationId,ShopSearchTableViewEnabledFlag,CartTableViewEnabledFlag,MyRequisitionsHeaderViewEnabledFlag,WorkOrderId,WorkOrder,WorkOrderOperationId,WorkOrderOperationSequence,AllowDirectPurchasesForWorkOrdersFlag;requisitioningOptions:RequestedDeliveryDateOffset&onlyData=true",
+              "resourceType": "ADF_BC_FIXED_QUERY",
+              "sampleQueries": [],
+              "type": "BUS_OBJECT"
+            },
+            {
+              "bodyTemplate": "",
+              "description": "Finds the active preference of type Self Service Procurement for the logged in user according to the user's requisition preferences.",
+              "id": 4,
+              "isNew": false,
+              "name": "get_current_user_active_requisition_preference",
+              "operationType": "GET",
+              "parameterDefinitions": [],
+              "resourcePath": "/fscmRestApi/resources/11.13.18.05/requisitionPreferences?finder=ActiveSSPPreferenceFinder&onlyData=true&expand=all&fields=PreferenceType,DeliverToCustomerLocationId,DeliverToLocationId,DeliverToLocationCode,DeliverToLocationName,DestinationOrganizationId,DestinationOrganizationCode,DestinationOrganization,InvOrgEnabledForProjectTracking,DestinationType,DestinationTypeCode,DestinationSubinventory,PersonId,PreferenceType,Requester,RequesterId,RequisitioningBU,SetId,RequisitioningBUId,UserPreferenceId,RequisitionBUOptionsOrganizationId,ShopSearchTableViewEnabledFlag,CartTableViewEnabledFlag,MyRequisitionsHeaderViewEnabledFlag,WorkOrderId,WorkOrder,WorkOrderOperationId,WorkOrderOperationSequence,AllowDirectPurchasesForWorkOrdersFlag;requisitioningOptions:RequestedDeliveryDateOffset&onlyData=true",
+              "resourceType": "ADF_BC_FIXED_QUERY",
+              "sampleQueries": [],
+              "type": "BUS_OBJECT"
+            }
+          ]
+        },
+        "ObjectCode": "ORA_PRC_SSP_REQUISITIONPREF",
+        "Family": "PRC",
+        "Product": "SSP",
+        "ObjectSource": "ADF_BC",
+        "Category": null,
+        "RestResourcePath": "/fscmRestApi/resources/11.13.18.05/requisitionPreferences",
+        "RestResourceIdentifier": "-1",
+        "RestSupportedOperations": "{}",
+        "ParentSupptObjectId": null,
+        "MandatoryFlag": false,
+        "SeededFlag": true,
+        "ObjectDisplayName": "Requisition Preferences",
+        "Name": "Requisition Preferences",
+        "Description": "This business object returns a given user's requisition preferences.",
+        "CreatedBy": "SEED_DATA_FROM_APPLICATION",
+        "CreationDate": "2025-09-27T00:33:27.055+00:00"
+      },
+      {
+        "ObjectProperties": {
+          "jsonSchemaName": "SupportedBusinessObject.objectProperties",
+          "jsonSchemaVersion": 1,
+          "tools": [
+            {
+              "headers": {
+                "REST-Framework-Version": "9",
+                "Accept-Language": "{locale}"
+              },
+              "bodyTemplate": "",
+              "description": "Returns the set of UOM which are active, or have a disable date greater than the current date with details localized to the specified locale.",
+              "id": 138,
+              "isNew": false,
+              "name": "GetActiveUOMByLocale",
+              "operationType": "GET",
+              "parameterDefinitions": [
+                {
+                  "dataType": "integer",
+                  "description": "Required Query parameter. Specifies the fetch count of the response. Defaults to 25 if not specified.",
+                  "id": 180,
+                  "isToken": true,
+                  "name": "plimit"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Used to localize UOM details.",
+                  "id": 181,
+                  "isToken": true,
+                  "name": "locale"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Class Code",
+                  "id": 182,
+                  "isToken": false,
+                  "name": "UOMClassCode"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Unit Of Measure Class Name",
+                  "id": 183,
+                  "isToken": false,
+                  "name": "UOMClassName"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Class Name",
+                  "id": 184,
+                  "isToken": false,
+                  "name": "UOMClass"
+                },
+                {
+                  "dataType": "string",
+                  "description": "UOM Code",
+                  "id": 185,
+                  "isToken": false,
+                  "name": "UOMCode"
+                },
+                {
+                  "dataType": "string",
+                  "description": "UOM Name",
+                  "id": 186,
+                  "isToken": false,
+                  "name": "UOM"
+                },
+                {
+                  "dataType": "string",
+                  "description": "UOM Description",
+                  "id": 187,
+                  "isToken": false,
+                  "name": "Description"
+                },
+                {
+                  "dataType": "string",
+                  "description": "End Date",
+                  "id": 188,
+                  "isToken": false,
+                  "name": "DisableDate"
+                },
+                {
+                  "dataType": "boolean",
+                  "description": "BaseUnitFlag",
+                  "id": 189,
+                  "isToken": false,
+                  "name": "BaseUnitFlag"
+                },
+                {
+                  "dataType": "number",
+                  "description": "Conversion",
+                  "id": 190,
+                  "isToken": false,
+                  "name": "StandardConversion"
+                }
+              ],
+              "resourcePath": "/fscmRestApi/resources/11.13.18.05/unitsOfMeasure?limit={plimit}&finder=ActiveUomFinder;DisableDate&onlyData=true",
+              "resourceType": "ADF_BC_FIXED_QUERY",
+              "sampleQueries": [],
+              "type": "BUS_OBJECT",
+              "useNativeAuthentication": true
+            },
+            {
+              "headers": {
+                "REST-Framework-Version": "9"
+              },
+              "bodyTemplate": "",
+              "description": "Returns the set of UOM which are active, or have a disable date greater than the current date.",
+              "id": 116,
+              "isNew": false,
+              "name": "GetActiveUOM",
+              "operationType": "GET",
+              "parameterDefinitions": [
+                {
+                  "dataType": "integer",
+                  "description": "Required Query parameter. Specifies the fetch count of the response. Defaults to 25 if not specified.",
+                  "id": 34,
+                  "isToken": true,
+                  "name": "plimit"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Class Code",
+                  "id": 35,
+                  "isToken": false,
+                  "name": "UOMClassCode"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Unit Of Measure Class Name",
+                  "id": 36,
+                  "isToken": false,
+                  "name": "UOMClassName"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Class Name",
+                  "id": 37,
+                  "isToken": false,
+                  "name": "UOMClass"
+                },
+                {
+                  "dataType": "string",
+                  "description": "UOM Code",
+                  "id": 38,
+                  "isToken": false,
+                  "name": "UOMCode"
+                },
+                {
+                  "dataType": "string",
+                  "description": "UOM Name",
+                  "id": 39,
+                  "isToken": false,
+                  "name": "UOM"
+                },
+                {
+                  "dataType": "string",
+                  "description": "UOM Description",
+                  "id": 40,
+                  "isToken": false,
+                  "name": "Description"
+                },
+                {
+                  "dataType": "string",
+                  "description": "End Date",
+                  "id": 41,
+                  "isToken": false,
+                  "name": "DisableDate"
+                },
+                {
+                  "dataType": "boolean",
+                  "description": "BaseUnitFlag",
+                  "id": 42,
+                  "isToken": false,
+                  "name": "BaseUnitFlag"
+                },
+                {
+                  "dataType": "number",
+                  "description": "Conversion",
+                  "id": 43,
+                  "isToken": false,
+                  "name": "StandardConversion"
+                }
+              ],
+              "resourcePath": "/fscmRestApi/resources/11.13.18.05/unitsOfMeasure?limit={plimit}&finder=ActiveUomFinder;DisableDate&onlyData=true",
+              "resourceType": "ADF_BC_FIXED_QUERY",
+              "sampleQueries": [],
+              "type": "BUS_OBJECT",
+              "useNativeAuthentication": true
+            }
+          ]
+        },
+        "ObjectCode": "ORA_SCM_SCMFOUNDAT_GETUOM",
+        "Family": "SCM",
+        "Product": "SCM_FOUNDATION",
+        "ObjectSource": "ADF_BC",
+        "Category": null,
+        "RestResourcePath": "/fscmRestApi/resources/11.13.18.05/unitsOfMeasure",
+        "RestResourceIdentifier": "-1",
+        "RestSupportedOperations": "{}",
+        "ParentSupptObjectId": null,
+        "MandatoryFlag": false,
+        "SeededFlag": true,
+        "ObjectDisplayName": "Get UOM",
+        "Name": "Get UOM",
+        "Description": "Returns a list of units of measure. Various filtering via parameters is available to obtain active UOM.",
+        "CreatedBy": "SEED_DATA_FROM_APPLICATION",
+        "CreationDate": "2025-09-18T05:28:59.145+00:00"
+      },
+      {
+        "ObjectProperties": {
+          "jsonSchemaName": "SupportedBusinessObject.objectProperties",
+          "jsonSchemaVersion": 1,
+          "tools": [
+            {
+              "headers": {
+                "REST-Framework-Version": "9",
+                "Accept-Language": "{locale}"
+              },
+              "bodyTemplate": "",
+              "description": "Returns the set of currencies which are active as of the current date with details localized to the specified locale.",
+              "id": 1,
+              "isNew": false,
+              "name": "GetActiveCurrenciesByLocale",
+              "operationType": "GET",
+              "parameterDefinitions": [
+                {
+                  "dataType": "integer",
+                  "description": "Required Query parameter. Specifies the fetch count of the response. Defaults to 25 if not specified.",
+                  "id": 44,
+                  "isToken": true,
+                  "name": "plimit"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Used to localize currency details.",
+                  "id": 45,
+                  "isToken": true,
+                  "name": "locale"
+                },
+                {
+                  "dataType": "string",
+                  "description": "The currency active on a particular date.",
+                  "id": 46,
+                  "isToken": false,
+                  "name": "ActiveDate"
+                },
+                {
+                  "dataType": "string",
+                  "description": "The currency code of the currency.",
+                  "id": 47,
+                  "isToken": false,
+                  "name": "CurrencyCode"
+                },
+                {
+                  "dataType": "string",
+                  "description": "The name of the currency.",
+                  "id": 48,
+                  "isToken": false,
+                  "name": "Name"
+                },
+                {
+                  "dataType": "string",
+                  "description": "The description of the currency.",
+                  "id": 49,
+                  "isToken": false,
+                  "name": "Description"
+                },
+                {
+                  "dataType": "string",
+                  "description": "The symbol that denotes the currency.",
+                  "id": 50,
+                  "isToken": false,
+                  "name": "Symbol"
+                },
+                {
+                  "dataType": "string",
+                  "description": "The date on which the currency became obsolete.",
+                  "id": 51,
+                  "isToken": false,
+                  "name": "EndDateActive"
+                },
+                {
+                  "dataType": "string",
+                  "description": "The date on which the currency came into use.",
+                  "id": 52,
+                  "isToken": false,
+                  "name": "StartDateActive"
+                }
+              ],
+              "resourcePath": "/fscmRestApi/resources/11.13.18.05/currenciesLOV?finder=CurrencyCodeFinder;ActiveDate&limit={plimit}&onlyData=true",
+              "resourceType": "ADF_BC_FIXED_QUERY",
+              "sampleQueries": [],
+              "type": "BUS_OBJECT",
+              "useNativeAuthentication": true
+            },
+            {
+              "headers": {
+                "REST-Framework-Version": "9"
+              },
+              "bodyTemplate": "",
+              "description": "Returns the set of currencies which are active as of the current date.",
+              "id": 0,
+              "isNew": false,
+              "name": "GetActiveCurrencies",
+              "operationType": "GET",
+              "parameterDefinitions": [
+                {
+                  "dataType": "integer",
+                  "description": "Required Query parameter. Specifies the fetch count of the response. Defaults to 25 if not specified.",
+                  "id": 54,
+                  "isToken": true,
+                  "name": "plimit"
+                },
+                {
+                  "dataType": "string",
+                  "description": "The currency active on a particular date.",
+                  "id": 55,
+                  "isToken": false,
+                  "name": "ActiveDate"
+                },
+                {
+                  "dataType": "string",
+                  "description": "The currency code of the currency.",
+                  "id": 56,
+                  "isToken": false,
+                  "name": "CurrencyCode"
+                },
+                {
+                  "dataType": "string",
+                  "description": "The name of the currency.",
+                  "id": 57,
+                  "isToken": false,
+                  "name": "Name"
+                },
+                {
+                  "dataType": "string",
+                  "description": "The description of the currency.",
+                  "id": 58,
+                  "isToken": false,
+                  "name": "Description"
+                },
+                {
+                  "dataType": "string",
+                  "description": "The symbol that denotes the currency.",
+                  "id": 59,
+                  "isToken": false,
+                  "name": "Symbol"
+                },
+                {
+                  "dataType": "string",
+                  "description": "The date on which the currency became obsolete.",
+                  "id": 60,
+                  "isToken": false,
+                  "name": "EndDateActive"
+                },
+                {
+                  "dataType": "string",
+                  "description": "The date on which the currency came into use.",
+                  "id": 61,
+                  "isToken": false,
+                  "name": "StartDateActive"
+                }
+              ],
+              "resourcePath": "/fscmRestApi/resources/11.13.18.05/currenciesLOV?finder=CurrencyCodeFinder;ActiveDate&limit={plimit}&onlyData=true",
+              "resourceType": "ADF_BC_FIXED_QUERY",
+              "sampleQueries": [],
+              "type": "BUS_OBJECT",
+              "useNativeAuthentication": true
+            }
+          ]
+        },
+        "ObjectCode": "ORA_SCM_SCMFOUNDAT_GETCURRENCY",
+        "Family": "SCM",
+        "Product": "SCM_FOUNDATION",
+        "ObjectSource": "ADF_BC",
+        "Category": null,
+        "RestResourcePath": "/fscmRestApi/resources/11.13.18.05/currenciesLOV",
+        "RestResourceIdentifier": "-1",
+        "RestSupportedOperations": "{}",
+        "ParentSupptObjectId": null,
+        "MandatoryFlag": false,
+        "SeededFlag": true,
+        "ObjectDisplayName": "Get Currency",
+        "Name": "Get Currency",
+        "Description": "Returns the list of currencies. Various filtering via parameters is available to obtain active currencies",
+        "CreatedBy": "SEED_DATA_FROM_APPLICATION",
+        "CreationDate": "2025-09-18T05:28:59.145+00:00"
+      },
+      {
+        "ObjectProperties": {
+          "jsonSchemaName": "SupportedBusinessObject.objectProperties",
+          "jsonSchemaVersion": 1,
+          "tools": [
+            {
+              "name": "getUserSession",
+              "type": "BUS_OBJECT",
+              "description": "Business Object that retrieves the PersonNumber of the employee (logged in user).",
+              "resourceType": "ADF_BC_FIXED_QUERY",
+              "resourcePath": "/hcmRestApi/resources/11.13.18.05/selfDetails",
+              "operationType": "GET",
+              "parameterDefinitions": [],
+              "sampleQueries": [
+                {
+                  "query": {},
+                  "description": "Fetch the PersonNumber of the employee (logged in user)"
+                }
+              ],
+              "isNew": false
+            }
+          ]
+        },
+        "ObjectCode": "ORA_HCM_SELF_DETAIL_OBJECT",
+        "Family": "HCM",
+        "Product": "OTHER",
+        "ObjectSource": "ADF_BC",
+        "Category": null,
+        "RestResourcePath": "/hcmRestApi/resources/11.13.18.05/selfDetails",
+        "RestResourceIdentifier": "-1",
+        "RestSupportedOperations": "{}",
+        "ParentSupptObjectId": null,
+        "MandatoryFlag": false,
+        "SeededFlag": true,
+        "ObjectDisplayName": "Self Detail",
+        "Name": "Self Detail",
+        "Description": "Self Detail",
+        "CreatedBy": "SEED_DATA_FROM_APPLICATION",
+        "CreationDate": "2025-06-19T23:38:50.850+00:00"
+      },
+      {
+        "ObjectProperties": {
+          "jsonSchemaName": "SupportedBusinessObject.objectProperties",
+          "jsonSchemaVersion": 1,
+          "tools": [
+            {
+              "bodyTemplate": "{\n    \"RequisitioningBUId\": {pRequisitioningBUId},\n    \"PreparerId\": {pPreparerId},\n    \"ExternallyManagedFlag\": false,\n    \"Description\": \"POST-ing a Requisition Header from REST\",\n    \"InterfaceSourceCode\": \"TestSS1\",\n    \"Justification\": \"{pJustification}\",\n\t\"lines\": {pLines}\n}",
+              "description": "Create purchase requisition",
+              "id": 0,
+              "isNew": true,
+              "name": "create_purchase_requisition",
+              "operationType": "POST",
+              "parameterDefinitions": [
+                {
+                  "dataType": "string",
+                  "description": "pRequisitioningBUId",
+                  "id": 9,
+                  "isToken": true,
+                  "name": "pRequisitioningBUId"
+                },
+                {
+                  "dataType": "string",
+                  "description": "pPreparerId",
+                  "id": 10,
+                  "isToken": true,
+                  "name": "pPreparerId"
+                },
+                {
+                  "dataType": "string",
+                  "description": "pJustification",
+                  "id": 11,
+                  "isToken": true,
+                  "name": "pJustification"
+                },
+                {
+                  "dataType": "string",
+                  "description": "pLines",
+                  "id": 12,
+                  "isToken": true,
+                  "name": "pLines"
+                }
+              ],
+              "resourcePath": "/fscmRestApi/resources/11.13.18.05/purchaseRequisitions",
+              "resourceType": "ADF_BC_FIXED_QUERY",
+              "sampleQueries": [],
+              "type": "BUS_OBJECT",
+              "useNativeAuthentication": true
+            }
+          ]
+        },
+        "ObjectCode": "ORA_PRC_SSP_AACREATEPURCHASEREQ",
+        "Family": "PRC",
+        "Product": "SSP",
+        "ObjectSource": "ADF_BC",
+        "Category": null,
+        "RestResourcePath": "/fscmRestApi/resources/11.13.18.05/purchaseRequisitions",
+        "RestResourceIdentifier": "identifier_not_known",
+        "RestSupportedOperations": "{\"allowedOperations\": {\"GET\": true, \"POST\": true, \"PATCH\": true, \"DELETE\": true}}",
+        "ParentSupptObjectId": null,
+        "MandatoryFlag": false,
+        "SeededFlag": false,
+        "ObjectDisplayName": "AA_CREATE_PURCHASE_REQ",
+        "Name": "AA_CREATE_PURCHASE_REQ",
+        "Description": "Create purchase requisition from PDF.",
+        "CreatedBy": "JOHN.DUNBAR",
+        "CreationDate": "2026-01-16T10:14:09.817+00:00"
+      }
+    ],
+    "agentNodes": [
+      {
+        "Specification": {
+          "jsonSchemaName": "Agent.spec",
+          "jsonSchemaVersion": "1",
+          "agentRole": "",
+          "customFlag": true,
+          "inputs": [],
+          "outputSpecification": "{\n    \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n    \"type\": \"object\",\n    \"properties\": {\n        \"fileText\": {\n            \"type\": \"string\"\n        },\n        \"fileName\": {\n            \"type\": \"string\"\n        },\n        \"language\": {\n            \"type\": \"string\"\n        },\n        \"isFileFound\": {\n            \"type\": \"string\"\n        }\n    }\n}",
+          "summarizationMode": "Default",
+          "summarizationPrompt": "Based on the information through the chat history and/or tool call responses, construct a clear, professional, and user-friendly answer to address the user's original query.\nconstruct an answer that addresses the user's original query.\nYour answer should be directed towards the user and should be friendly, professional,\nand concise. If you are not able to answer the user's question based on the tool calls or through the chat history,\nyou should let them know that you do not have access to that information.\n\n--ANSWER REQUIREMENTS--\nYour answer should be based only on the information available to you in the tool calling chat\nhistory. You should never invent or make up answers. If the question requires you to synthesize\nanswers across several tool responses, you should do that. Note that some information may need\nto be summarized from across multiple places in a given object. Use your inference and semantic\nknowledge to derive the answer from the data without inventing anything.\n\n--ADDITIONAL REQUIREMENTS--\n* Do not mention tool calls, chat history, underlying operations, or system processes.\n* Keep the response natural and conversational without unnecessary preambles.\n* Provide a direct and engaging response without phrases like \"Based on tool calls\" or similar references.\n* Do not append any characters or trailing Periods (.) at the end of valid URLs.\n* If link is generated by DeepLink tool do not remove from response."
+        },
+        "AgentId": "300000322494603",
+        "AgentCode": "ORA_REQUISITION_FILE_PROCESSOR_AGENT",
+        "Name": "Requisition File Processor Agent",
+        "Description": "This agent analyzes any uploaded document, such as a supplier quotation. It extracts information relevant to create a purchase requisition.",
+        "Family": "PRC",
+        "Product": "SSP",
+        "ModuleId": "61ECAF4AAC24E990E040449821C61C97",
+        "Namespace": "PRC.SSP",
+        "SeededFlag": true,
+        "PromptCode": null,
+        "Version": 1,
+        "MaximumInteractions": 10,
+        "AgentType": "WORKER",
+        "Prompt": "You are the Document Processor Agent.\nYou receive uploaded documents such as supplier quotations.\nYour responsibilities: \n1. Use Multifileprocessor tool to parse the uploaded document and extract all the information such as file name, file text and the ISO 639 standard language code of the content.\n2. Use chat history {{$context.$system.$chatHistory}} and input message {{$context.$system.$inputMessage}} to figure out if any file was uploaded.\n3. If multiple files are found, you must process only the last file content.\n4. If there was no file or document found or the file size was 0 from step 1, return N in IsFileFound. All the other attributes will be null.\n5. If the file was found by Multifileprocessor tool and has contents,\n- IsFileFound in the output will be Y.\n- Extract the contents to fileText\n6. Return the output in structured JSON format.",
+        "ModelConfigId": null,
+        "ReusableFlag": true,
+        "tools": [
+          {
+            "ToolCode": "ORA_MULTI_FILE_PROCESSOR_TOOL",
+            "Type": "MULTI_FILE_PROCESSOR",
+            "Name": "MultiFileProcessor",
+            "Description": "This tool type will be used to process the files uploaded at runtime",
+            "Family": "COMMON",
+            "Product": "OTHER",
+            "SeededFlag": true,
+            "HiddenFlag": false,
+            "ModuleId": "074F58CB6E686D21E0634CA56C64F55F",
+            "Namespace": "COMMON.OTHER",
+            "Version": 1,
+            "UserInputRequiredFlag": false,
+            "Specification": null,
+            "UserInputMsg": null
+          }
+        ],
+        "topics": []
+      },
+      {
+        "Specification": {
+          "jsonSchemaName": "Agent.spec",
+          "jsonSchemaVersion": "1",
+          "agentRole": "",
+          "customFlag": true,
+          "inputs": [
+            {
+              "id": "1754635756168",
+              "name": "RequisitionHeaderId",
+              "type": "integer",
+              "value": "12345",
+              "description": "Requisition Header Id"
+            }
+          ],
+          "outputSpecification": "{\n    \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n    \"type\": \"object\",\n    \"properties\": {\n        \"deeplink\": {\n            \"type\": \"string\"\n        }\n    }\n}",
+          "summarizationMode": "Default",
+          "summarizationPrompt": "Based on the information through the chat history and/or tool call responses, construct a clear, professional, and user-friendly answer to address the user's original query.\nconstruct an answer that addresses the user's original query.\nYour answer should be directed towards the user and should be friendly, professional,\nand concise. If you are not able to answer the user's question based on the tool calls or through the chat history,\nyou should let them know that you do not have access to that information.\n\n--ANSWER REQUIREMENTS--\nYour answer should be based only on the information available to you in the tool calling chat\nhistory. You should never invent or make up answers. If the question requires you to synthesize\nanswers across several tool responses, you should do that. Note that some information may need\nto be summarized from across multiple places in a given object. Use your inference and semantic\nknowledge to derive the answer from the data without inventing anything.\n\n--ADDITIONAL REQUIREMENTS--\n* Do not mention tool calls, chat history, underlying operations, or system processes.\n* Keep the response natural and conversational without unnecessary preambles.\n* Provide a direct and engaging response without phrases like \"Based on tool calls\" or similar references.\n* Do not append any characters or trailing Periods (.) at the end of valid URLs.\n* If link is generated by DeepLink tool do not remove from response."
+        },
+        "AgentId": "300000317111705",
+        "AgentCode": "ORA_GENERATE_REQUISITION_DEEP_LINK",
+        "Name": "Generate Requisition Deep Link",
+        "Description": "This agent creates a deep link that takes users directly to a corresponding requisition.",
+        "Family": "PRC",
+        "Product": "SSP",
+        "ModuleId": "61ECAF4AAC24E990E040449821C61C97",
+        "Namespace": "PRC.SSP",
+        "SeededFlag": true,
+        "PromptCode": null,
+        "Version": 1,
+        "MaximumInteractions": 10,
+        "AgentType": "WORKER",
+        "Prompt": "You are an agent used to generate a deep link for requisition details by taking input parameter RequisitionHeaderId.\n\nGiven an input of RequisitionHeaderId, construct a deep link using the Purchase Requisition Details Link tool. The Requisition Header ID will be the input to you that is {{$context.$agents.$self.$input}}\n\nOnce the deep link is ready, show the deep link in the output.",
+        "ModelConfigId": null,
+        "ReusableFlag": true,
+        "tools": [
+          {
+            "Specification": {},
+            "DeepLinkTool": {
+              "DeepLinkProperties": {
+                "description": "Deep link that enables employees to view the full details of a requisition.",
+                "fixedQuery": "/fscmUI/redwood/procurement/requisitions/tabbar/shopping/requisitiondetails?requisitionHeaderId={RequisitionHeaderId}",
+                "isSeeded": true,
+                "jsonSchemaName": "DeepLink.deepLinkProperties",
+                "jsonSchemaVersion": 1,
+                "name": "oraPrcSspPurchaserequisitiondetails",
+                "operationType": "GET",
+                "parameterDefinitions": [
+                  {
+                    "dataType": "integer",
+                    "description": "Purchase Requisition Header Id",
+                    "name": "RequisitionHeaderId",
+                    "queryable": "true",
+                    "sampleValue": 300100636005237
+                  }
+                ],
+                "resourceType": "ADF_BC_DEEPLINK",
+                "sampleQueries": [
+                  {
+                    "query": {
+                      "RequisitionHeaderId": 300100636005237
+                    },
+                    "description": "Deep link that enables employees to view the full details of a requisition."
+                  }
+                ],
+                "type": "DEEPLINK"
+              },
+              "DeepLinkCode": "ORA_PRC_SSP_PURCHASEREQUISITIONDEEPLINK",
+              "UsageType": "VbAppUi",
+              "DestinationURL": "/fscmUI/redwood/procurement/requisitions/tabbar/shopping/requisitiondetails?requisitionHeaderId={RequisitionHeaderId}",
+              "Family": "PRC",
+              "Product": "SSP",
+              "Name": "Deep link that enables employees to view the full details of a requisition.",
+              "Description": "Purchase Requisition Details",
+              "Message": "Click {deepLink} for details.",
+              "CreatedBy": "SEED_DATA_FROM_APPLICATION",
+              "CreationDate": "2025-06-27T22:17:03+00:00"
+            },
+            "ToolCode": "ORA_VIEW_PURCHASE_REQUISITION_DETAILS",
+            "Type": "DEEPLINK",
+            "Name": "View Purchase Requisition Details",
+            "Description": "This deep link tool enables the employee to view the purchase requisition details.",
+            "Family": "PRC",
+            "Product": "SSP",
+            "SeededFlag": true,
+            "HiddenFlag": true,
+            "ModuleId": "61ECAF4AAC24E990E040449821C61C97",
+            "Namespace": "PRC.SSP",
+            "Version": 1,
+            "UserInputRequiredFlag": false,
+            "UserInputMsg": null
+          }
+        ],
+        "topics": []
+      }
+    ],
+    "workflowNodes": [],
+    "documentProcessorNodes": [],
+    "ragDocumentToolNodes": []
+  },
+  "WorkflowCode": "QUOTE_TO_PURCHASE_REQUISITION_CHAT_ASSISTANT_JJ04",
+  "Name": "Quote to Purchase Requisition Chat Assistant JJ04",
+  "Description": "This agent workflow will handle queries about requisition and will also create requisition from quotation.",
+  "Family": "PRC",
+  "Product": "SSP",
+  "UseCaseId": "NA",
+  "SourceWorkflowId": null,
+  "AccessModifier": "public",
+  "StartQuestionOne": null,
+  "StartQuestionTwo": null,
+  "StartQuestionThree": null,
+  "FollowUpPromptEnabledFlag": false,
+  "FollowUpPrompt": "Based on the following conversion: $param.system_context.chat_history generate $param.system_context.number_of_follow_up_questions\nfollow up questions only while strictly adhering to the JSON Schema format mentioned below. Remove the ```json markdown from the output.\nHere is the JSON Schema format the output should adhere to:\n[{\"question\": \"<put first question generated here>\"}, {\"question\": \"<put second question generated here>\"}, {\"question\": \"<put third question generated here>\"}",
+  "Architecture": "data_pipeline",
+  "MaximumInteractions": null,
+  "StartAgentId": null,
+  "agents": [],
+  "agentMappings": [],
+  "partnerMetadata": {
+    "Description": "",
+    "Name": ""
+  }
+}
