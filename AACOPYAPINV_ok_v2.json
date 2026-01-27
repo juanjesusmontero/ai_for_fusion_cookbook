@@ -1,0 +1,627 @@
+{
+  "Specification": {
+    "dataPipeline": {
+      "pipelineNodes": [
+        {
+          "metadata": {
+            "description": "End of data pipeline",
+            "name": "End"
+          },
+          "outcomes": {},
+          "code": "END",
+          "id": "end",
+          "inputs": [],
+          "type": "END"
+        }
+      ],
+      "rootNode": "end",
+      "variables": [],
+      "errorHandlers": [
+        {
+          "type": "EMAIL",
+          "inputs": [
+            {
+              "name": "toList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "ccList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "subject",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "body",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        }
+      ]
+    },
+    "jsonSchemaName": "Workflow.spec",
+    "jsonSchemaVersion": "1",
+    "inputs": [
+      {
+        "id": "1769281264228",
+        "name": "InvoiceId",
+        "type": "integer",
+        "value": "{{$context.$system.$inputMessage.InvoiceId}}",
+        "description": "InvoiceId from existing invoice"
+      }
+    ],
+    "outputSpecification": " ",
+    "agentsValueMappings": [
+      {
+        "agentCode": "AAAGENTDUPAPINV",
+        "inputs": []
+      }
+    ],
+    "humanApprovalFlag": false,
+    "triggers": [
+      {
+        "type": "REST",
+        "inputs": []
+      }
+    ],
+    "deletedTriggerTypes": [],
+    "chatExpTPFileUploadEnabledFlag": false,
+    "chatExpThirdPartyDetails": []
+  },
+  "WorkflowCode": "AACOPYAPINV",
+  "Name": "AA_COPY_AP_INV",
+  "Description": "An AI assistant that helps end users to create invoices by copying from, and modifying, existing invoices. \nFirst using the \"GetUserSession\" tool  to get date information, then \"TOOL AP Get Invoice Details\" tool to get order details based on the order number, \nthen using the \"TOOL AP Get Invoice Lines\" tool to get invoice line details using pInvoiceId. \nThen, create a new invoice and lines using \"AA_TOOL_CREATE_AP_INVOICE\" tool , finally providing a deep link to the invoice via \"AP Invoice View Link\" Deep Link tool",
+  "Family": "FIN",
+  "Product": "OTHER",
+  "UseCaseId": "NA",
+  "SourceWorkflowId": null,
+  "AccessModifier": "public",
+  "StartQuestionOne": "Copy invoice \"PCS10053_0825\" with new invoice number \"jj-00004\". Use \"SupplierSite\": \"Staffing US1\"",
+  "StartQuestionTwo": "Copy invoice \"PCS10053_0825\" with new invoice number \"jj-00005\". Use \"SupplierSite\": \"Staffing US1\"",
+  "StartQuestionThree": "Copy invoice \"PCS10053_0825\" with new invoice number \"jj-00006\". Use \"SupplierSite\": \"Staffing US1\"",
+  "FollowUpPromptEnabledFlag": false,
+  "FollowUpPrompt": "Based on the following conversion: $param.system_context.chat_history generate $param.system_context.number_of_follow_up_questions\nfollow up questions only while strictly adhering to the JSON Schema format mentioned below. Remove the ```json markdown from the output.\nHere is the JSON Schema format the output should adhere to:\n[{\"question\": \"<put first question generated here>\"}, {\"question\": \"<put second question generated here>\"}, {\"question\": \"<put third question generated here>\"}",
+  "Architecture": "single_agent",
+  "MaximumInteractions": null,
+  "StartAgentId": null,
+  "agents": [
+    {
+      "Specification": {
+        "jsonSchemaName": "Agent.spec",
+        "jsonSchemaVersion": "1",
+        "agentRole": "",
+        "customFlag": true,
+        "inputs": [],
+        "outputSpecification": " ",
+        "summarizationMode": "Default",
+        "summarizationPrompt": "Based on the information through the chat history and/or tool call responses, construct a clear, professional, and user-friendly answer to address the user's original query.\nconstruct an answer that addresses the user's original query.\nYour answer should be directed towards the user and should be friendly, professional,\nand concise. If you are not able to answer the user's question based on the tool calls or through the chat history,\nyou should let them know that you do not have access to that information.\n\n--ANSWER REQUIREMENTS--\nYour answer should be based only on the information available to you in the tool calling chat\nhistory. You should never invent or make up answers. If the question requires you to synthesize\nanswers across several tool responses, you should do that. Note that some information may need\nto be summarized from across multiple places in a given object. Use your inference and semantic\nknowledge to derive the answer from the data without inventing anything.\n\n--ADDITIONAL REQUIREMENTS--\n* Do not mention tool calls, chat history, underlying operations, or system processes.\n* Keep the response natural and conversational without unnecessary preambles.\n* Provide a direct and engaging response without phrases like \"Based on tool calls\" or similar references.\n* Do not append any characters or trailing Periods (.) at the end of valid URLs.\n* If link is generated by DeepLink tool do not remove from response."
+      },
+      "AgentCode": "AAAGENTDUPAPINV",
+      "Name": "AA_AGENT_DUP_AP_INV",
+      "Description": "An AI assistant that helps payables team to create invoices by first using the \"TOOL AP Get Invoice Details\" tool to get invoice details based on the invoice number, \nthen using the \"TOOL AP Get Invoice Lines\" tool to get invoice line details using InvoiceId,\nand showing options if eligible or an error message if not. \nOnce user selects the invoice options then create invoice and lines using the \"AA_TOOL_CREATE_AP_INVOICE\" tool.",
+      "Family": "FIN",
+      "Product": "OTHER",
+      "ModuleId": null,
+      "Namespace": "FIN.OTHER",
+      "SeededFlag": false,
+      "PromptCode": null,
+      "Version": 47,
+      "MaximumInteractions": 10,
+      "AgentType": "WORKER",
+      "Prompt": "Instruction to the Assistant\n\n## Copy-To-New-Invoice Advisor\n\n* You are an assistant that helps payables teams create new invoices by copying details from an existing invoice. \n\n\n* Only follow the steps provided in this prompt\n---\n\n## Types of Questions\n\n* \"Create a new invoice from invoice 'AND_Unmatched_Project_Invoice2' but only line 1\"\n\n### TOOL CALL SEQUENCE (REQUIRED):\n1. **GetUserSession**('GetUserSession')\n2. **TOOL AP Get Invoice Details** ('TOOL AP Get Invoice Details')\n3. **TOOL AP Get Invoice Lines** ('TOOL AP Get Invoice Lines')  \n4. **AA_TOOL_CREATE_AP_INVOICE** ('AA_TOOL_CREATE_AP_INVOICE')  \n5. **AP Invoice View Link** (Deeplink Tool: 'AP Invoice View Link', requires InvoiceId from previous step)\n\n---\n\n##  STEPS (**FOLLOW EXACT SEQUENCE BELOW**)\n\n\n### 1) Extract the source order\n\nIf user does not supply an Invoice Number , ask: \"Please provide the Invoice Number .\"\n* Display invoice  number\n\n### 2) Get invoiceid (DO NOT SKIP THIS STEP)\n\n* Call 'TOOL AP Get Invoice Details' with the provided Invoice Number.\n* Store 'InvoiceId' \n* Show 'InvoiceId'\n\n* Extract the following input parameters from the order header and assign as specified:  \n\n  - 'InvoiceCurrency' to 'pInvoiceCurrency'  \n  - 'InvoiceAmount' to 'pInvoiceAmount'  \n  - 'InvoiceDate' to 'pInvoiceDate'  \n  - 'BusinessUnit' to 'pBusinessUnit'  \n  - 'Supplier' to 'pSupplier'\n  - 'SupplierSite' to 'pSupplierSite'  \n  - 'InvoiceGroup' to 'pInvoiceGroup'  \n  - 'Description' to 'pDescription'\n\n\n* Call 'TOOL AP Get Invoice Lines' tool \n\nFormat each line of LineType 'Item' as:\n```json\n    {\n                \"Description\": {Description},\n                \"Item\": {Item},\n                \"ItemDescription\": {ItemDescription},\n                \"Quantity\": {Quantity},\n      \"LineNumber\": {LineNumber},\n      \"LineAmount\": {LineAmount},\n      \"LineType\": {LineType}\n    }\n```\n\n * Combine all lines into a single array called 'pLines'.\n\n\n### 4) Create invoice .\n\n* Call 'AA_TOOL_CREATE_AP_INVOICE' tool with all required parameters:\n  - `pInvoiceCurrency`\n  - `pInvoiceAmount`\n  - `pInvoiceDate`\n  - `pBusinessUnit`\n  - `pSupplier`\n  - `pSupplierSite`\n  - `pInvoiceGroup`\n  - `pDescription`\n  - `pLines`\n\n**Do NOT proceed to the next step until you have both `InvoiceNumber` and `InvoiceId` from this response.**\n  - On success: Extract `InvoiceNumber` as `NewInvoiceNumber` and `InvoiceId` as `NewInvoiceId`.\n  - On failure: \n        ***1. In case of error in tool 'AA_TOOL_CREATE_AP_INVOICE' show complete 'response' .\n        ***2. Present errors to the user and **STOP** the process.\n\n\n### 5) On success,  Deep Link\n\n* Call 'AP Invoice View Link'\n* Return: **InvoiceNumber#<NewInvoiceNumber> - \\[DEEPLINK TOOL with NewInvoiceId]**.",
+      "ModelConfigId": null,
+      "ReusableFlag": false,
+      "tools": [
+        {
+          "ToolCode": "ORA_USER_SESSION_TOOL",
+          "Type": "USER_SESSION",
+          "Name": "GetUserSession",
+          "Description": "Tool that fetches the PersonNumber of the logged in user.",
+          "Family": "COMMON",
+          "Product": "OTHER",
+          "SeededFlag": true,
+          "HiddenFlag": false,
+          "ModuleId": "074F58CB6E686D21E0634CA56C64F55F",
+          "Namespace": "COMMON.OTHER",
+          "Version": 1,
+          "UserInputRequiredFlag": false,
+          "Specification": null,
+          "UserInputMsg": null
+        },
+        {
+          "Specification": {},
+          "DeepLinkTool": {
+            "DeepLinkProperties": {
+              "description": "A link allowing a user to view AP Invoice Details",
+              "fixedQuery": "/fscmUI/faces/deeplink?objType=AP_VIEWINVOICE&action=VIEW&objKey=InvoiceId={InvoiceId}",
+              "isSeeded": false,
+              "jsonSchemaName": "DeepLink.deepLinkProperties",
+              "jsonSchemaVersion": 1,
+              "name": "oraFinOtherApinvoiceviewlink",
+              "operationType": "GET",
+              "parameterDefinitions": [
+                {
+                  "dataType": "string",
+                  "description": "The Internal ID of the invoice",
+                  "name": "InvoiceId",
+                  "queryable": "true",
+                  "sampleValue": "300000136616859"
+                }
+              ],
+              "resourceType": "ADF_BC_DEEPLINK",
+              "sampleQueries": [
+                {
+                  "query": {
+                    "InvoiceId": "300000136616859"
+                  },
+                  "description": "A link allowing a user to view AP Invoice Details"
+                }
+              ],
+              "type": "DEEPLINK"
+            },
+            "DeepLinkCode": "ORA_FIN_OTHER_APINVOICEVIEWLINK",
+            "UsageType": "VbAppUi",
+            "DestinationURL": "/fscmUI/faces/deeplink?objType=AP_VIEWINVOICE&action=VIEW&objKey=InvoiceId={InvoiceId}",
+            "Family": "FIN",
+            "Product": "OTHER",
+            "Name": "AP Invoice View Link",
+            "Description": "A link allowing a user to view AP Invoice Details",
+            "Message": "Click {deepLink} for details on this invoice.",
+            "CreatedBy": "CURTIS.FEITTY",
+            "CreationDate": "2025-08-19T14:00:04.095+00:00"
+          },
+          "ToolCode": "AP_INVOICE_VIEW_LINK",
+          "Type": "DEEPLINK",
+          "Name": "AP Invoice View Link",
+          "Description": "A link to the invoice details based on the internal id of the invoice",
+          "Family": "FIN",
+          "Product": "OTHER",
+          "SeededFlag": false,
+          "HiddenFlag": false,
+          "ModuleId": null,
+          "Namespace": "FIN.OTHER",
+          "Version": 1,
+          "UserInputRequiredFlag": false,
+          "UserInputMsg": "null"
+        },
+        {
+          "Specification": {
+            "jsonSchemaName": "Tool.spec",
+            "jsonSchemaVersion": "1"
+          },
+          "RestTool": {
+            "ObjectProperties": {
+              "jsonSchemaName": "SupportedBusinessObject.objectProperties",
+              "jsonSchemaVersion": 1,
+              "tools": [
+                {
+                  "bodyTemplate": "",
+                  "description": "Get a single Invoice Based on an Invoice Number",
+                  "id": 0,
+                  "isNew": true,
+                  "name": "Get_Invoice_Based_On_Invoice_Number",
+                  "operationType": "GET",
+                  "parameterDefinitions": [
+                    {
+                      "dataType": "string",
+                      "description": "SupplierSite",
+                      "id": 71,
+                      "isToken": false,
+                      "name": "SupplierSite"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "Invoice Number",
+                      "id": 48,
+                      "isToken": true,
+                      "name": "InvoiceNumber"
+                    },
+                    {
+                      "dataType": "integer",
+                      "description": "The internal ID of this Invoice",
+                      "id": 49,
+                      "isToken": false,
+                      "name": "InvoiceId"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "Supplier Number",
+                      "id": 50,
+                      "isToken": false,
+                      "name": "SupplierNumber"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "The approval status of this invoice",
+                      "id": 51,
+                      "isToken": false,
+                      "name": "ApprovalStatus"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "The payment status of this invoice",
+                      "id": 52,
+                      "isToken": false,
+                      "name": "PaidStatus"
+                    },
+                    {
+                      "dataType": "number",
+                      "description": "The Amount which was paid for this invoice",
+                      "id": 53,
+                      "isToken": false,
+                      "name": "AmountPaid"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "The user who created this invoice",
+                      "id": 54,
+                      "isToken": false,
+                      "name": "CreatedBy"
+                    },
+                    {
+                      "dataType": "date",
+                      "description": "The Creation Date of this invoice",
+                      "id": 55,
+                      "isToken": false,
+                      "name": "CreationDate"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "The Invoice Number",
+                      "id": 56,
+                      "isToken": false,
+                      "name": "InvoiceNumber"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "The Invoice Currency",
+                      "id": 57,
+                      "isToken": false,
+                      "name": "InvoiceCurrency"
+                    },
+                    {
+                      "dataType": "number",
+                      "description": "The Base Amount for this invoice",
+                      "id": 58,
+                      "isToken": false,
+                      "name": "BaseAmount"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "The Business Unit in which this invoice was created",
+                      "id": 59,
+                      "isToken": false,
+                      "name": "BusinessUnit"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "The supplier name for this invoice",
+                      "id": 60,
+                      "isToken": false,
+                      "name": "Supplier"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "The Invoice Date",
+                      "id": 61,
+                      "isToken": false,
+                      "name": "InvoiceDate"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "The Description of the invoice",
+                      "id": 62,
+                      "isToken": false,
+                      "name": "Description"
+                    },
+                    {
+                      "dataType": "integer",
+                      "description": "The Line Number",
+                      "id": 63,
+                      "isToken": false,
+                      "name": "invoiceLines.LineNumber"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "The Line Type. Can be tax, freight, ...",
+                      "id": 64,
+                      "isToken": false,
+                      "name": "invoiceLines.LineType"
+                    },
+                    {
+                      "dataType": "number",
+                      "description": "Line Amount",
+                      "id": 65,
+                      "isToken": false,
+                      "name": "invoiceLines.LineAmount"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "Line Description",
+                      "id": 66,
+                      "isToken": false,
+                      "name": "invoiceLines.Description"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "Purchase Order matched to this line",
+                      "id": 67,
+                      "isToken": false,
+                      "name": "invoiceLines.PurchaseOrderNumber"
+                    },
+                    {
+                      "dataType": "number",
+                      "description": "Purchase Order Line matched to this line",
+                      "id": 68,
+                      "isToken": false,
+                      "name": "invoiceLines.PurchaseOrderLineNumber"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "Match Type for this line",
+                      "id": 69,
+                      "isToken": false,
+                      "name": "invoiceLines.MatchType"
+                    }
+                  ],
+                  "resourcePath": "/fscmRestApi/resources/11.13.18.05/invoices?q=InvoiceNumber='{InvoiceNumber}'&onlyData=true",
+                  "resourceType": "ADF_BC_FIXED_QUERY",
+                  "sampleQueries": [
+                    {
+                      "query": {
+                        "MyInvoiceNumber": "0001"
+                      },
+                      "description": "Retrieve Invoice Details for invoice number 0001",
+                      "id": 70,
+                      "stringValue": "{\"MyInvoiceNumber\":\"0001\"}"
+                    }
+                  ],
+                  "type": "BUS_OBJECT",
+                  "useNativeAuthentication": true
+                }
+              ]
+            },
+            "ObjectCode": "ORA_FIN_OTHER_APGETINVOICEDETAILSDEMO",
+            "Family": "FIN",
+            "Product": "OTHER",
+            "ObjectSource": "ADF_BC",
+            "Category": null,
+            "RestResourcePath": "/fscmRestApi/resources/11.13.18.05/invoices",
+            "RestResourceIdentifier": "identifier_not_known",
+            "RestSupportedOperations": "{\"allowedOperations\": {\"GET\": true, \"POST\": true, \"PATCH\": true, \"DELETE\": true}}",
+            "ParentSupptObjectId": null,
+            "MandatoryFlag": false,
+            "SeededFlag": false,
+            "ObjectDisplayName": "AP Get Invoice Details DEMO",
+            "Name": "AP Get Invoice Details DEMO",
+            "Description": "Retrieve the invoice details for a single invoice",
+            "CreatedBy": "Ray.Smith",
+            "CreationDate": "2026-01-25T12:06:34.246+00:00"
+          },
+          "ToolCode": "TOOL_AP_GET_INVOICE_DETAILS_",
+          "Type": "BUS_OBJECT",
+          "Name": "TOOL AP Get Invoice Details",
+          "Description": "get invoice details",
+          "Family": "FIN",
+          "Product": "OTHER",
+          "SeededFlag": false,
+          "HiddenFlag": false,
+          "ModuleId": null,
+          "Namespace": "FIN.OTHER",
+          "Version": 1,
+          "UserInputRequiredFlag": false,
+          "UserInputMsg": "null"
+        },
+        {
+          "Specification": {
+            "jsonSchemaName": "Tool.spec",
+            "jsonSchemaVersion": "1"
+          },
+          "RestTool": {
+            "ObjectProperties": {
+              "jsonSchemaName": "SupportedBusinessObject.objectProperties",
+              "jsonSchemaVersion": 1,
+              "tools": [
+                {
+                  "bodyTemplate": "{\n    \"InvoiceNumber\": \"{pInvoiceNumber}\",\n    \"InvoiceCurrency\": \"{pInvoiceCurrency}\",\n    \"InvoiceAmount\": {pInvoiceAmount},\n    \"InvoiceDate\": \"{pInvoiceDate}\",\n    \"BusinessUnit\": \"{pBusinessUnit}\",\n    \"Supplier\": \"{pSupplier}\",\n    \"SupplierSite\": \"{pSupplierSite}\",\n    \"InvoiceGroup\": \"{pInvoiceGroup}\",\n    \"Description\": \"{pDescription}\",\n\t\"invoiceLines\": {pLines}\n}",
+                  "description": "create payables invoice",
+                  "id": 53,
+                  "isNew": true,
+                  "name": "create_payables_invoice",
+                  "operationType": "POST",
+                  "parameterDefinitions": [
+                    {
+                      "dataType": "string",
+                      "description": "pInvoiceNumber",
+                      "id": 54,
+                      "isToken": true,
+                      "name": "pInvoiceNumber"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "pInvoiceCurrency",
+                      "id": 55,
+                      "isToken": true,
+                      "name": "pInvoiceCurrency"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "pInvoiceAmount",
+                      "id": 56,
+                      "isToken": true,
+                      "name": "pInvoiceAmount"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "pInvoiceDate",
+                      "id": 57,
+                      "isToken": true,
+                      "name": "pInvoiceDate"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "pBusinessUnit",
+                      "id": 58,
+                      "isToken": true,
+                      "name": "pBusinessUnit"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "pSupplier",
+                      "id": 59,
+                      "isToken": true,
+                      "name": "pSupplier"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "pSupplierSite",
+                      "id": 60,
+                      "isToken": true,
+                      "name": "pSupplierSite"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "pInvoiceGroup",
+                      "id": 61,
+                      "isToken": true,
+                      "name": "pInvoiceGroup"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "pDescription",
+                      "id": 62,
+                      "isToken": true,
+                      "name": "pDescription"
+                    },
+                    {
+                      "dataType": "string",
+                      "description": "pLines",
+                      "id": 63,
+                      "isToken": true,
+                      "name": "pLines"
+                    }
+                  ],
+                  "resourcePath": "/fscmRestApi/resources/11.13.18.05/invoices",
+                  "resourceType": "ADF_BC_FIXED_QUERY",
+                  "sampleQueries": [],
+                  "type": "BUS_OBJECT"
+                }
+              ]
+            },
+            "ObjectCode": "ORA_FIN_OTHER_AACREATEAPINVOICE",
+            "Family": "FIN",
+            "Product": "OTHER",
+            "ObjectSource": "ADF_BC",
+            "Category": null,
+            "RestResourcePath": "/fscmRestApi/resources/11.13.18.05/invoices",
+            "RestResourceIdentifier": "identifier_not_known",
+            "RestSupportedOperations": "{\"allowedOperations\": {\"GET\": true, \"POST\": true, \"PATCH\": true, \"DELETE\": true}}",
+            "ParentSupptObjectId": null,
+            "MandatoryFlag": false,
+            "SeededFlag": false,
+            "ObjectDisplayName": "AA_CREATE_AP_INVOICE",
+            "Name": "AA_CREATE_AP_INVOICE",
+            "Description": "create payables invoice",
+            "CreatedBy": "Ray.Smith",
+            "CreationDate": "2026-01-25T12:06:42.401+00:00"
+          },
+          "ToolCode": "AATOOLCREATEAPINVOICE",
+          "Type": "BUS_OBJECT",
+          "Name": "AA_TOOL_CREATE_AP_INVOICE",
+          "Description": "create payables invoice",
+          "Family": "FIN",
+          "Product": "OTHER",
+          "SeededFlag": false,
+          "HiddenFlag": false,
+          "ModuleId": null,
+          "Namespace": "FIN.OTHER",
+          "Version": 1,
+          "UserInputRequiredFlag": false,
+          "UserInputMsg": "null"
+        },
+        {
+          "Specification": {
+            "jsonSchemaName": "Tool.spec",
+            "jsonSchemaVersion": "1"
+          },
+          "RestTool": {
+            "ObjectProperties": {
+              "jsonSchemaName": "SupportedBusinessObject.objectProperties",
+              "jsonSchemaVersion": 1,
+              "tools": [
+                {
+                  "bodyTemplate": "",
+                  "description": "Get invoice lines",
+                  "id": 0,
+                  "isNew": true,
+                  "name": "get_invoice_lines",
+                  "operationType": "GET",
+                  "parameterDefinitions": [
+                    {
+                      "dataType": "string",
+                      "description": "pInvoiceId",
+                      "id": 3,
+                      "isToken": true,
+                      "name": "pInvoiceId"
+                    }
+                  ],
+                  "resourcePath": "/fscmRestApi/resources/11.13.18.05/invoices/{pInvoiceId}/child/invoiceLines?expand=all&q=LineType='Item'",
+                  "resourceType": "ADF_BC_FIXED_QUERY",
+                  "sampleQueries": [],
+                  "type": "BUS_OBJECT",
+                  "useNativeAuthentication": true
+                }
+              ]
+            },
+            "ObjectCode": "ORA_FIN_OTHER_APGETINVOICELINESDEMO",
+            "Family": "FIN",
+            "Product": "OTHER",
+            "ObjectSource": "ADF_BC",
+            "Category": null,
+            "RestResourcePath": "/fscmRestApi/resources/11.13.18.05/invoices",
+            "RestResourceIdentifier": "identifier_not_known",
+            "RestSupportedOperations": "{\"allowedOperations\": {\"GET\": true, \"POST\": true, \"PATCH\": true, \"DELETE\": true}}",
+            "ParentSupptObjectId": null,
+            "MandatoryFlag": false,
+            "SeededFlag": false,
+            "ObjectDisplayName": "AP Get Invoice Lines DEMO",
+            "Name": "AP Get Invoice Lines DEMO",
+            "Description": "Retrieve the invoice details for a single invoice",
+            "CreatedBy": "Ray.Smith",
+            "CreationDate": "2026-01-25T12:06:36.851+00:00"
+          },
+          "ToolCode": "TOOL_AP_GET_INVOICE_LINES",
+          "Type": "BUS_OBJECT",
+          "Name": "TOOL AP Get Invoice Lines",
+          "Description": "get invoice lines",
+          "Family": "FIN",
+          "Product": "OTHER",
+          "SeededFlag": false,
+          "HiddenFlag": false,
+          "ModuleId": null,
+          "Namespace": "FIN.OTHER",
+          "Version": 1,
+          "UserInputRequiredFlag": false,
+          "UserInputMsg": "null"
+        }
+      ],
+      "topics": []
+    }
+  ],
+  "agentMappings": [
+    {
+      "EdgeOrder": 0,
+      "AgentCode": "AAAGENTDUPAPINV",
+      "AgentTargetCode": "AAAGENTDUPAPINV"
+    }
+  ],
+  "partnerMetadata": {
+    "Description": "",
+    "Name": ""
+  }
+}
