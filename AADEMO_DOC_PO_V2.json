@@ -1,0 +1,157 @@
+{
+  "Specification": {
+    "dataPipeline": {
+      "pipelineNodes": [
+        {
+          "metadata": {
+            "description": "Start of data pipeline",
+            "name": "Start"
+          },
+          "outcomes": {
+            "success": "end"
+          },
+          "code": "START",
+          "id": "start",
+          "inputs": [],
+          "type": "START"
+        },
+        {
+          "metadata": {
+            "description": "End of data pipeline",
+            "name": "End"
+          },
+          "outcomes": {},
+          "code": "END",
+          "id": "end",
+          "inputs": [],
+          "type": "END"
+        }
+      ],
+      "rootNode": "start",
+      "variables": [],
+      "errorHandlers": [
+        {
+          "type": "EMAIL",
+          "inputs": [
+            {
+              "name": "toList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "ccList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "subject",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "body",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        }
+      ]
+    },
+    "jsonSchemaName": "Workflow.spec",
+    "jsonSchemaVersion": "1",
+    "inputs": [],
+    "outputSpecification": " ",
+    "agentsValueMappings": [
+      {
+        "agentCode": "DOCUMENT_ASSISTANT",
+        "inputs": []
+      }
+    ],
+    "humanApprovalFlag": false,
+    "triggers": [
+      {
+        "type": "REST",
+        "inputs": []
+      }
+    ],
+    "deletedTriggerTypes": [],
+    "chatExpLocalFileUploadEnabledFlag": true,
+    "chatExpTPFileUploadEnabledFlag": false,
+    "chatExpThirdPartyDetails": []
+  },
+  "WorkflowCode": "AADEMO_DOC_PO_V2",
+  "Name": "AA_DEMO_DOC_PO_V2",
+  "Description": "Agent team for validating and processing attachment upload capabilities during AI Agent interaction",
+  "Family": "FIN",
+  "Product": "OTHER",
+  "UseCaseId": "NA",
+  "SourceWorkflowId": null,
+  "AccessModifier": "public",
+  "StartQuestionOne": null,
+  "StartQuestionTwo": null,
+  "StartQuestionThree": null,
+  "FollowUpPromptEnabledFlag": false,
+  "FollowUpPrompt": "Based on the following conversion: $param.system_context.chat_history generate $param.system_context.number_of_follow_up_questions\nfollow up questions only while strictly adhering to the JSON Schema format mentioned below. Remove the ```json markdown from the output.\nHere is the JSON Schema format the output should adhere to:\n[{\"question\": \"<put first question generated here>\"}, {\"question\": \"<put second question generated here>\"}, {\"question\": \"<put third question generated here>\"}",
+  "Architecture": "single_agent",
+  "MaximumInteractions": null,
+  "StartAgentId": null,
+  "agents": [
+    {
+      "Specification": {
+        "jsonSchemaName": "Agent.spec",
+        "jsonSchemaVersion": "1",
+        "agentRole": "Helpful document processing specialist, who can receive, review and extract information.",
+        "customFlag": true,
+        "inputs": [],
+        "outputSpecification": " ",
+        "summarizationMode": "Custom",
+        "summarizationPrompt": "You are a document processing assistant.\n\nYou will convert a source PDF file representing a purchase order and will generate a purchase order using the JSON sample provided.\n\nOrderNumber will use Puchase Order in file adding prefix \"PO_DEMO-\".\n\nConvert result to JSON format using this sample data.\nThis is a JSON example:\n´´´\n{\n\t\"OrderNumber\": \"ON-001\",\n\t\"ProcurementBU\": \"Vision Operations\",\n\t\"RequisitioningBU\": \"Vision Operations\",\n\t\"Buyer\": \"Jones,Hillary\",\n\t\"Supplier\": \"Tall Manufacturing\",\n\t\"Currency\": \"US Dollar\",\n\t\"SupplierSite\": \"RK Site\",\n\t\"BillToLocation\": \"Texas Branch\",\n\t\"DefaultShipToLocation\": \"Texas Branch\",\n\t\"RequiredAcknowledgment\": \"None\",\n\t\"Description\": \"PO created using REST\",\n\t\"SupplierCommunicationMethod\": \"EMAIL\",\n\t\"SupplierEmailAddress\": \"TallManufacturing@example.com\",\n\t\"BuyerManagedTransportFlag\": true,\n\t\"PayOnReceiptFlag\": \"N\",\n\t\"PaymentTerms\": \"45 Net (terms date + 45)\",\n\t\"FreightTerms\": \"Due\",\n\t\"FOB\": \"Origin\",\n\t\"NoteToReceiver\": \"This is a note to Receiver\",\n\t\"NoteToSupplier\": \"This is a note to Supplier\",\n\t\"Carrier\": \"Airborne\",\n\t\"ServiceLevel\": \"2nd day air\",\n\t\"ModeOfTransportCode\": \"PARCEL\",\n\t\"lines\":[{\n\t\t\"LineNumber\": 1,\n\t\t\"LineType\": \"Goods\",\n\t\t\"Category\": \"Miscellaneous_1\",\n\t\t\"Description\": \"Laptop Battery\",\n\t\t\"Quantity\": 10,\n\t\t\"Price\": 20,\n\t\t\"UOM\": \"Each\",\n\t\t\"schedules\":[\n\t\t{\n\t\t\t\"ScheduleNumber\":1,\n\t\t\t\"Quantity\":10,\n\t\t\t\"ShipToLocation\":\"Texas Branch\",\n\t\t\t\"ShipToOrganization\":\"Vision Construction\",\n\t\t\t\"ReceiptCloseTolerancePercent\":0,\n\t\t\t\"InvoiceMatchOptionCode\":\"R\",\n\t\t\t\"EarlyReceiptToleranceDays\":0,\n\t\t\t\"InvoiceCloseTolerancePercent\":0,\n\t\t\t\"LateReceiptToleranceDays\":0,\n\t\t\t\"AccrueAtReceiptFlag\":\"N\",\n\t\t\t\"InspectionRequiredFlag\":true,\n\t\t\t\"ReceiptRequiredFlag\":false,\n\t\t\t\"ReceiptRoutingId\":1,\n\t\t\t\"DestinationTypeCode\":\"EXPENSE\",\n\t\t\t\"Carrier\": \"Airborne\",\n\t\t\t\"ServiceLevel\": \"2nd day air\",\n\t\t\t\"ModeOfTransportCode\": \"PARCEL\",\n\t\t\t\"distributions\": [\n\t\t\t{\n\t\t\t\t\"DistributionNumber\": 1,\n\t\t\t\t\"DeliverToLocation\": \"Texas Branch\",\n\t\t\t\t\"POChargeAccountId\": 31064,\n\t\t\t\t\"Quantity\": 10\n\t\t\t}\n\t\t\t]\n\t\t}\n\t\t]\n\t}\n\t]\n}\n´´´"
+      },
+      "AgentCode": "DOCUMENT_ASSISTANT",
+      "Name": "Document Assistant",
+      "Description": "AI Agent designed to process and analize uploaded files during conversations.\n\nSource file is a purchase order and target file is a payables invoice.",
+      "Family": "FIN",
+      "Product": "OTHER",
+      "ModuleId": null,
+      "Namespace": "FIN.OTHER",
+      "SeededFlag": false,
+      "PromptCode": null,
+      "Version": 4,
+      "MaximumInteractions": null,
+      "AgentType": "WORKER",
+      "Prompt": "Demo",
+      "ModelConfigId": "100002143427760",
+      "ReusableFlag": false,
+      "tools": [
+        {
+          "ToolCode": "ORA_MULTI_FILE_PROCESSOR_TOOL",
+          "Type": "MULTI_FILE_PROCESSOR",
+          "Name": "MultiFileProcessor",
+          "Description": "This tool type will be used to process the files uploaded at runtime",
+          "Family": "COMMON",
+          "Product": "OTHER",
+          "SeededFlag": true,
+          "HiddenFlag": false,
+          "ModuleId": "074F58CB6E686D21E0634CA56C64F55F",
+          "Namespace": "COMMON.OTHER",
+          "Version": 1,
+          "UserInputRequiredFlag": false,
+          "Specification": null,
+          "UserInputMsg": null
+        }
+      ],
+      "topics": []
+    }
+  ],
+  "agentMappings": [
+    {
+      "EdgeOrder": 0,
+      "AgentCode": "DOCUMENT_ASSISTANT",
+      "AgentTargetCode": "DOCUMENT_ASSISTANT"
+    }
+  ],
+  "partnerMetadata": {
+    "Description": "",
+    "Name": ""
+  }
+}

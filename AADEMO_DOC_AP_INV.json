@@ -1,0 +1,157 @@
+{
+  "Specification": {
+    "dataPipeline": {
+      "pipelineNodes": [
+        {
+          "metadata": {
+            "description": "Start of data pipeline",
+            "name": "Start"
+          },
+          "outcomes": {
+            "success": "end"
+          },
+          "code": "START",
+          "id": "start",
+          "inputs": [],
+          "type": "START"
+        },
+        {
+          "metadata": {
+            "description": "End of data pipeline",
+            "name": "End"
+          },
+          "outcomes": {},
+          "code": "END",
+          "id": "end",
+          "inputs": [],
+          "type": "END"
+        }
+      ],
+      "rootNode": "start",
+      "variables": [],
+      "errorHandlers": [
+        {
+          "type": "EMAIL",
+          "inputs": [
+            {
+              "name": "toList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "ccList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "subject",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "body",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        }
+      ]
+    },
+    "jsonSchemaName": "Workflow.spec",
+    "jsonSchemaVersion": "1",
+    "inputs": [],
+    "outputSpecification": " ",
+    "agentsValueMappings": [
+      {
+        "agentCode": "DOCUMENT_ASSISTANT",
+        "inputs": []
+      }
+    ],
+    "humanApprovalFlag": false,
+    "triggers": [
+      {
+        "type": "REST",
+        "inputs": []
+      }
+    ],
+    "deletedTriggerTypes": [],
+    "chatExpLocalFileUploadEnabledFlag": true,
+    "chatExpTPFileUploadEnabledFlag": false,
+    "chatExpThirdPartyDetails": []
+  },
+  "WorkflowCode": "AADEMO_DOC_AP_INV",
+  "Name": "AA_DEMO_DOC_AP_INV",
+  "Description": "Agent team for validating and processing attachment upload capabilities during AI Agent interaction",
+  "Family": "FIN",
+  "Product": "OTHER",
+  "UseCaseId": "NA",
+  "SourceWorkflowId": null,
+  "AccessModifier": "public",
+  "StartQuestionOne": null,
+  "StartQuestionTwo": null,
+  "StartQuestionThree": null,
+  "FollowUpPromptEnabledFlag": false,
+  "FollowUpPrompt": "Based on the following conversion: $param.system_context.chat_history generate $param.system_context.number_of_follow_up_questions\nfollow up questions only while strictly adhering to the JSON Schema format mentioned below. Remove the ```json markdown from the output.\nHere is the JSON Schema format the output should adhere to:\n[{\"question\": \"<put first question generated here>\"}, {\"question\": \"<put second question generated here>\"}, {\"question\": \"<put third question generated here>\"}",
+  "Architecture": "single_agent",
+  "MaximumInteractions": null,
+  "StartAgentId": null,
+  "agents": [
+    {
+      "Specification": {
+        "jsonSchemaName": "Agent.spec",
+        "jsonSchemaVersion": "1",
+        "agentRole": "Helpful document processing specialist, who can receive, review and extract information.",
+        "customFlag": true,
+        "inputs": [],
+        "outputSpecification": " ",
+        "summarizationMode": "Custom",
+        "summarizationPrompt": "You are a document processing assistant.\n\nYou will convert a source PDF file representing a purchase order and will generate a Payables invoice using the JSON sample provided.\n\n\"InvoiceNumber\" will use Puchase Order in file.\nThen add prefix \"INV-\" to \"InvoiceNumber\".\n\nConvert result to JSON format using this sample data.\nThis is a JSON example:\n´´´\n{\n\t\"InvoiceNumber\": \"PurchaseOrder\",\n\t\"InvoiceCurrency\": \"USD\",\n\t\"InvoiceAmount\": 2212.75,\n\t\"InvoiceDate\": \"2019-02-01\",\n\t\"BusinessUnit\": \"Vision Operations\",\n\t\"Supplier\": \"Advanced Network Devices\",\n\t\"SupplierSite\": \"FRESNO\",\n\t\"Requester\": \"Johnson,Mary\",\n\t\"InvoiceGroup\": \"01Feb2019\",\n\t\"Description\": \"Office Supplies\",\n\t\"invoiceLines\": [\n\t\t{\n\t\t\t\"LineNumber\": 1,\n\"AccountingDate\": \"2018-11-01\",\n\"UOM\": \"Ea\",\n\"LineType\": \"Item\",\n\"Description\": \"Description\",\n\"Item\": null,\n\"ItemDescription\": \"Consulting Services\",\n\"Quantity\": 0,\n\t\t\t\"LineAmount\": 2112.75\n\t\t},\n\t\t{\n\t\t\t\"LineNumber\": 2,\n\"AccountingDate\": \"2018-11-01\",\n\"UOM\": \"Ea\",\n\"LineType\": \"Item\",\n\"Description\": \"Description\",\n\"Item\": null,\n\"ItemDescription\": \"Consulting Services\",\n\"Quantity\": 0,\n\t\t\t\"LineType\": \"Freight\",\n\t\t\t\"LineAmount\": 100\n\t\t}\n\t]\n}\n´´´"
+      },
+      "AgentCode": "DOCUMENT_ASSISTANT",
+      "Name": "Document Assistant",
+      "Description": "AI Agent designed to process and analize uploaded files during conversations.\n\nSource file is a purchase order and target file is a payables invoice.",
+      "Family": "FIN",
+      "Product": "OTHER",
+      "ModuleId": null,
+      "Namespace": "FIN.OTHER",
+      "SeededFlag": false,
+      "PromptCode": null,
+      "Version": 12,
+      "MaximumInteractions": null,
+      "AgentType": "WORKER",
+      "Prompt": "You are a document processing assistant.\n\nYou will convert a source PDF file representing a purchase order and will generate a Payables invoice using the JSON sample provided.\n\nInvoiceNumber will use Puchase Order in file adding prefix \"INV-\".\n\nConvert result to JSON format using this sample data.\nThis is a JSON example:\n´´´\n{\n\t\"InvoiceNumber\": \"PurchaseOrder\",\n\t\"InvoiceCurrency\": \"USD\",\n\t\"InvoiceAmount\": 2212.75,\n\t\"InvoiceDate\": \"2019-02-01\",\n\t\"BusinessUnit\": \"Vision Operations\",\n\t\"Supplier\": \"Advanced Network Devices\",\n\t\"SupplierSite\": \"FRESNO\",\n\t\"Requester\": \"Johnson,Mary\",\n\t\"InvoiceGroup\": \"01Feb2019\",\n\t\"Description\": \"Office Supplies\",\n\t\"invoiceLines\": [\n\t\t{\n\t\t\t\"LineNumber\": 1,\n\t\t\t\"LineAmount\": 2112.75\n\t\t},\n\t\t{\n\t\t\t\"LineNumber\": 2,\n\t\t\t\"LineType\": \"Freight\",\n\t\t\t\"LineAmount\": 100,\n\t\t\t\"ProrateAcrossAllItemsFlag\": true\n\t\t}\n\t]\n}\n´´´",
+      "ModelConfigId": "100002143427760",
+      "ReusableFlag": false,
+      "tools": [
+        {
+          "ToolCode": "ORA_MULTI_FILE_PROCESSOR_TOOL",
+          "Type": "MULTI_FILE_PROCESSOR",
+          "Name": "MultiFileProcessor",
+          "Description": "This tool type will be used to process the files uploaded at runtime",
+          "Family": "COMMON",
+          "Product": "OTHER",
+          "SeededFlag": true,
+          "HiddenFlag": false,
+          "ModuleId": "074F58CB6E686D21E0634CA56C64F55F",
+          "Namespace": "COMMON.OTHER",
+          "Version": 1,
+          "UserInputRequiredFlag": false,
+          "Specification": null,
+          "UserInputMsg": null
+        }
+      ],
+      "topics": []
+    }
+  ],
+  "agentMappings": [
+    {
+      "EdgeOrder": 0,
+      "AgentCode": "DOCUMENT_ASSISTANT",
+      "AgentTargetCode": "DOCUMENT_ASSISTANT"
+    }
+  ],
+  "partnerMetadata": {
+    "Description": "",
+    "Name": ""
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "Specification": {
+    "dataPipeline": {
+      "pipelineNodes": [
+        {
+          "metadata": {
+            "description": "Start of data pipeline",
+            "name": "Start"
+          },
+          "outcomes": {
+            "success": "end"
+          },
+          "code": "START",
+          "id": "start",
+          "inputs": [],
+          "type": "START"
+        },
+        {
+          "metadata": {
+            "description": "End of data pipeline",
+            "name": "End"
+          },
+          "outcomes": {},
+          "code": "END",
+          "id": "end",
+          "inputs": [],
+          "type": "END"
+        }
+      ],
+      "rootNode": "start",
+      "variables": [],
+      "errorHandlers": [
+        {
+          "type": "EMAIL",
+          "inputs": [
+            {
+              "name": "toList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "ccList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "subject",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "body",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        }
+      ]
+    },
+    "jsonSchemaName": "Workflow.spec",
+    "jsonSchemaVersion": "1",
+    "inputs": [],
+    "outputSpecification": " ",
+    "agentsValueMappings": [
+      {
+        "agentCode": "DOCUMENT_ASSISTANT",
+        "inputs": []
+      }
+    ],
+    "humanApprovalFlag": false,
+    "triggers": [
+      {
+        "type": "REST",
+        "inputs": []
+      }
+    ],
+    "deletedTriggerTypes": [],
+    "chatExpLocalFileUploadEnabledFlag": true,
+    "chatExpTPFileUploadEnabledFlag": false,
+    "chatExpThirdPartyDetails": []
+  },
+  "WorkflowCode": "AADEMO_DOC_AR_TRX",
+  "Name": "AA_DEMO_DOC_AR_TRX",
+  "Description": "Agent team for validating and processing attachment upload capabilities during AI Agent interaction",
+  "Family": "FIN",
+  "Product": "OTHER",
+  "UseCaseId": "NA",
+  "SourceWorkflowId": null,
+  "AccessModifier": "public",
+  "StartQuestionOne": null,
+  "StartQuestionTwo": null,
+  "StartQuestionThree": null,
+  "FollowUpPromptEnabledFlag": false,
+  "FollowUpPrompt": "Based on the following conversion: $param.system_context.chat_history generate $param.system_context.number_of_follow_up_questions\nfollow up questions only while strictly adhering to the JSON Schema format mentioned below. Remove the ```json markdown from the output.\nHere is the JSON Schema format the output should adhere to:\n[{\"question\": \"<put first question generated here>\"}, {\"question\": \"<put second question generated here>\"}, {\"question\": \"<put third question generated here>\"}",
+  "Architecture": "single_agent",
+  "MaximumInteractions": null,
+  "StartAgentId": null,
+  "agents": [
+    {
+      "Specification": {
+        "jsonSchemaName": "Agent.spec",
+        "jsonSchemaVersion": "1",
+        "agentRole": "Helpful document processing specialist, who can receive, review and extract information.",
+        "customFlag": true,
+        "inputs": [],
+        "outputSpecification": " ",
+        "summarizationMode": "Custom",
+        "summarizationPrompt": "You are a document processing assistant.\n\nYou will convert a source PDF file representing a purchase order and will generate a receivables transaction using the JSON sample provided.\n\n\nAfter processing each file restart all calculations, even if the file is the same.\nDo not store data between a file uploaded and next file, even if the file is the same.\nAlways use the data from the PDF file, AND ONLY FROM THE FILE, not from previous runs.\n\n\n### In header section.\n\"Comments\" will use \"Puchase Order\" in file adding prefix \"AR_TRX_DEMO-\".\nConcatenate \"PaymentTerms\" to \"InternalNotes\".\nAdd one day to \"DueDate\".\nReplace content in \"Comments\" with \"hola\".\nSubstract one day from \"TransactionDate\".\nFor \"BillingDate\" use today date with format \"yyyy-mm-dd\".\n\n### In \"receivablesInvoiceLines\" section.\nMultiply \"Quantity\" by 5.\nIncrease the \"UnitSellingPrice\" by 50%.\nSet \"TaxRateCode\" with value \"VAT28\".\nSet \"TaxAmount\" with value 33.\n\nConvert result to JSON format using this sample data.\nThis is a JSON example:\n´´´\n{\n    \"BillingDate\":\"2018-10-10\",\n    \"BillToCustomerNamer\":\"demo\",\n    \"BusinessUnit\":\"Vision Operations\",\n    \"Comments\":\"Test comments\",\n    \"DueDate\":\"2018-10-10\",\n    \"InternalNotes\":\"Test internal notes\",\n    \"InvoiceCurrencyCode\":\"USD\",\n    \"PaymentTerms\":\"30 Net\",\n    \"TransactionDate\":\"2018-10-10\",\n    \"TransactionSource\":\"Manual-NES\",\n    \"ShipToCustomerName\":\"Total Internet\",\n    \"ShipToSite\":\"1042\",\n    \"TransactionType\":\"Invoice\",\n    \"StructuredPaymentReference\":\"TestRef\",\n    \"receivablesInvoiceLines\":[\n       {\n          \"Description\":\"Item\",\n          \"LineNumber\":1,\n\"ItemNumber\": \"IT01\",\n          \"Quantity\":102,\n          \"UnitSellingPrice\":100,\n          \"TaxClassificationCode\":\"VAT20\",\n          \"receivablesInvoiceLineTaxLines\":[\n             {\n                \"TaxAmount\":680,\n                \"TaxRegimeCode\":\"FUS_STCC_REGIME-UES\",\n                \"TaxRateCode\":\"VAT20\"\n             }\n          ]\n       },\n       {\n          \"Description\":\"Item\",\n          \"LineNumber\":2,\n\"ItemNumber\": \"IT02\",\n          \"Quantity\":10,\n          \"UnitSellingPrice\":100.2,\n          \"TaxClassificationCode\":\"VAT20\",\n          \"receivablesInvoiceLineTaxLines\":[\n             {\n                \"TaxAmount\":180.4,\n                \"TaxRegimeCode\":\"FUS_STCC_REGIME-UES\",\n                \"TaxRateCode\":\"VAT20\"\n             }\n          ]\n       }\n    ]\n }\n´´´\n\n\n"
+      },
+      "AgentCode": "DOCUMENT_ASSISTANT",
+      "Name": "Document Assistant",
+      "Description": "AI Agent designed to process and analize uploaded files during conversations.\n\nSource file is a purchase order and target file is a receivables transaction.",
+      "Family": "FIN",
+      "Product": "OTHER",
+      "ModuleId": null,
+      "Namespace": "FIN.OTHER",
+      "SeededFlag": false,
+      "PromptCode": null,
+      "Version": 18,
+      "MaximumInteractions": null,
+      "AgentType": "WORKER",
+      "Prompt": "Demo",
+      "ModelConfigId": "100002143427760",
+      "ReusableFlag": false,
+      "tools": [
+        {
+          "ToolCode": "ORA_MULTI_FILE_PROCESSOR_TOOL",
+          "Type": "MULTI_FILE_PROCESSOR",
+          "Name": "MultiFileProcessor",
+          "Description": "This tool type will be used to process the files uploaded at runtime",
+          "Family": "COMMON",
+          "Product": "OTHER",
+          "SeededFlag": true,
+          "HiddenFlag": false,
+          "ModuleId": "074F58CB6E686D21E0634CA56C64F55F",
+          "Namespace": "COMMON.OTHER",
+          "Version": 1,
+          "UserInputRequiredFlag": false,
+          "Specification": null,
+          "UserInputMsg": null
+        }
+      ],
+      "topics": []
+    }
+  ],
+  "agentMappings": [
+    {
+      "EdgeOrder": 0,
+      "AgentCode": "DOCUMENT_ASSISTANT",
+      "AgentTargetCode": "DOCUMENT_ASSISTANT"
+    }
+  ],
+  "partnerMetadata": {
+    "Description": "",
+    "Name": ""
+  }
+}
