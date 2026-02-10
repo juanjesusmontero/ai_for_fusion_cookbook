@@ -1,0 +1,280 @@
+{
+  "Specification": {
+    "dataPipeline": {
+      "pipelineNodes": [
+        {
+          "metadata": {
+            "description": "Start of data pipeline",
+            "name": "Start"
+          },
+          "outcomes": {
+            "success": "1770580443301"
+          },
+          "code": "START",
+          "id": "start",
+          "inputs": [],
+          "type": "START"
+        },
+        {
+          "metadata": {
+            "description": "End of data pipeline",
+            "name": "End"
+          },
+          "outcomes": {},
+          "code": "END",
+          "id": "end",
+          "inputs": [],
+          "type": "END"
+        },
+        {
+          "metadata": {
+            "name": "PARSE_USER_INPUT"
+          },
+          "outcomes": {
+            "success": "1770624475343"
+          },
+          "code": "PARSE_USER_INPUT",
+          "id": "1770580443301",
+          "inputs": [
+            {
+              "id": "1770580443303_1",
+              "name": "prompt",
+              "type": "string",
+              "value": "## System/Instruction\n\nYou are an information extraction assistant. \nBased on the user input {{$context.$system.$inputMessage}}, produce variables: vInvoices, vBusinessUnit following the rules below. \n\nReturn ONLY a single JSON object with these keys and values. \n\n## Automatic Translation\nThe agent will automatically detect the language of the user's request and respond accordingly.\n\n## Extraction rules\n\nvInvoices: \n  - Extract all invoices mentioned. Return as a comma-separated array, where each invoice is wrapped in single quotes.\n     Example: If the user question is 'Get me invoices 00001 and 00002, then the output MUST be of format  ['00001','00002'].\n\nvBusinessUnit:\n  - set vBusinessUnit using input from user. Example \" use Business Unit US1 Business Unit\".\n\nvBusinessUnitPrefix:\n  - set vBusinessUnitPrefix using the 4 first characters of vBusinessUnit.\n\n         \n## Output format\nReturn ONLY this JSON:\n{\n  \"vInvoices\": \"Array of strings\",\n  \"vInvoiceCount\": \"<numeric>\",\n  \"vBusinessUnit\": \"<string>\",\n  \"vBusinessUnitPrefix\": \"<string>\"\n}"
+            }
+          ],
+          "outputSpecification": "{\n\t\"$schema\": \"http://json-schema.org/draft-04/schema#\",\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"vInvoices\": {\n\t\t\t\"type\": \"array\",\n\t\t\t\"items\": {\n\t\t\t\t\"type\": \"string\"\n\t\t\t},\n\t\t\t\"vInvoiceCount\": {\n\t\t\t\t\"type\": \"numeric\"\n\t\t\t},\n\t\t\t\"vBusinessUnit\": {\n\t\t\t\t\"type\": \"string\"\n\t\t\t},\n\t\t\t\"vBusinessUnitPrefix\": {\n\t\t\t\t\"type\": \"string\"\n\t\t\t}\n\t\t}\n\t}\n}",
+          "type": "LLM"
+        },
+        {
+          "metadata": {
+            "dataPipeline": {
+              "pipelineNodes": [
+                {
+                  "metadata": {
+                    "name": "Start",
+                    "description": "Start of data pipeline"
+                  },
+                  "outcomes": {
+                    "success": "1770644004125"
+                  },
+                  "id": "start_1770624475343",
+                  "code": "START_1770624475343",
+                  "type": "START"
+                },
+                {
+                  "metadata": {
+                    "name": "End",
+                    "description": "End of data pipeline"
+                  },
+                  "id": "end_1770624475343",
+                  "code": "END_1770624475343",
+                  "type": "END"
+                },
+                {
+                  "metadata": {
+                    "name": "IF_VALIDATE"
+                  },
+                  "outcomes": {
+                    "true": "1770644129646",
+                    "false": "1770644191725"
+                  },
+                  "code": "IFVALIDATE",
+                  "convergenceTargetId": "end_1770624475343",
+                  "id": "1770644004125",
+                  "inputs": [
+                    {
+                      "id": "1770644004129_1",
+                      "name": "condition",
+                      "type": "string",
+                      "value": "{{($context.$nodes.PARSE_USER_INPUT.$output.vBusinessUnit == \"Vision BU1\" || $context.$nodes.PARSE_USER_INPUT.$output.vBusinessUnit == \"Vision BU2\") && ($context.$nodes.LOOPDEMO.$currentItem.substr(1,4)=='INV-')}}"
+                    }
+                  ],
+                  "type": "CONDITION"
+                },
+                {
+                  "metadata": {
+                    "name": "MAIL_DEBUG_01",
+                    "type": "GENERIC"
+                  },
+                  "outcomes": {
+                    "success": "end_1770624475343"
+                  },
+                  "code": "MAILDEBUG01",
+                  "id": "1770644129646",
+                  "inputs": [
+                    {
+                      "id": "1770644129666_1",
+                      "name": "toList",
+                      "type": "string",
+                      "value": "xxx@hotmail.com"
+                    },
+                    {
+                      "id": "1770644129673_2",
+                      "name": "ccList",
+                      "type": "string",
+                      "value": ""
+                    },
+                    {
+                      "id": "1770644129674_3",
+                      "name": "subject",
+                      "type": "string",
+                      "value": "IF returned TRUE"
+                    },
+                    {
+                      "id": "1770644129676_4",
+                      "name": "body",
+                      "type": "string",
+                      "value": "Dear friend, \n<br>\nCurrent values in your loop.\n<br>\nBusiness unit :  {{$context.$nodes.PARSE_USER_INPUT.$output.vBusinessUnit}}\n<br>\nInvoice is  : {{$context.$nodes.LOOPDEMO.$currentItem}}\n<br>\nInvoice substr is  : {{$context.$nodes.LOOPDEMO.$currentItem.substr(1,4)}}\n<br>\nInvoice length is  : {{$context.$nodes.LOOPDEMO.$currentItem.length}}"
+                    },
+                    {
+                      "id": "1770644129678_5",
+                      "name": "attachments",
+                      "type": "object"
+                    }
+                  ],
+                  "type": "EMAIL"
+                },
+                {
+                  "metadata": {
+                    "name": "MAIL_DEBUG_02",
+                    "type": "GENERIC"
+                  },
+                  "outcomes": {
+                    "success": "end_1770624475343"
+                  },
+                  "code": "MAILDEBUG02",
+                  "id": "1770644191725",
+                  "inputs": [
+                    {
+                      "id": "1770644191728_1",
+                      "name": "toList",
+                      "type": "string",
+                      "value": "xxx@hotmail.com"
+                    },
+                    {
+                      "id": "1770644191730_2",
+                      "name": "ccList",
+                      "type": "string"
+                    },
+                    {
+                      "id": "1770644191731_3",
+                      "name": "subject",
+                      "type": "string",
+                      "value": "IF returned FALSE"
+                    },
+                    {
+                      "id": "1770644191732_4",
+                      "name": "body",
+                      "type": "string",
+                      "value": "Dear friend, \n\nCurrent values in your loop.\n\nBusiness unit :  {{$context.$nodes.PARSE_USER_INPUT.$output.vBusinessUnit}}\nInvoice is  : {{$context.$nodes.LOOPDEMO.$currentItem}}"
+                    },
+                    {
+                      "id": "1770644191733_5",
+                      "name": "attachments",
+                      "type": "object"
+                    }
+                  ],
+                  "type": "EMAIL"
+                }
+              ],
+              "rootNode": "start_1770624475343"
+            },
+            "loopType": "PARALLEL",
+            "name": "LOOP_DEMO"
+          },
+          "outcomes": {
+            "success": "end"
+          },
+          "code": "LOOPDEMO",
+          "id": "1770624475343",
+          "inputs": [
+            {
+              "id": "1770624475350_1",
+              "name": "collection",
+              "type": "string",
+              "value": "{{$context.$nodes.PARSE_USER_INPUT.$output.vInvoices}}"
+            }
+          ],
+          "type": "LOOP"
+        }
+      ],
+      "rootNode": "start",
+      "variables": [],
+      "errorHandlers": [
+        {
+          "type": "EMAIL",
+          "inputs": [
+            {
+              "name": "toList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "ccList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "subject",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "body",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        }
+      ]
+    },
+    "jsonSchemaName": "Workflow.spec",
+    "jsonSchemaVersion": "1",
+    "inputs": [],
+    "outputSpecification": " ",
+    "agentsValueMappings": [],
+    "humanApprovalFlag": false,
+    "triggers": [
+      {
+        "type": "REST",
+        "inputs": []
+      }
+    ],
+    "deletedTriggerTypes": [],
+    "chatExpTPFileUploadEnabledFlag": false,
+    "chatExpThirdPartyDetails": []
+  },
+  "dependencies": {
+    "boFunctionNodes": [],
+    "agentNodes": [],
+    "workflowNodes": [],
+    "documentProcessorNodes": [],
+    "ragDocumentToolNodes": [],
+    "toolNodes": [],
+    "externalRestNodes": []
+  },
+  "WorkflowCode": "AADEMO_ARRAY_FIN",
+  "Name": "AA_DEMO_ARRAY_FIN",
+  "Description": "DEMO",
+  "Family": "FIN",
+  "Product": "OTHER",
+  "HiddenFlag": false,
+  "UseCaseId": "NA",
+  "SourceWorkflowId": null,
+  "AccessModifier": "public",
+  "StartQuestionOne": null,
+  "StartQuestionTwo": null,
+  "StartQuestionThree": null,
+  "FollowUpPromptEnabledFlag": false,
+  "FollowUpPrompt": "Based on the following conversion: $param.system_context.chat_history generate $param.system_context.number_of_follow_up_questions\nfollow up questions only while strictly adhering to the JSON Schema format mentioned below. Remove the ```json markdown from the output.\nHere is the JSON Schema format the output should adhere to:\n[{\"question\": \"<put first question generated here>\"}, {\"question\": \"<put second question generated here>\"}, {\"question\": \"<put third question generated here>\"}",
+  "Architecture": "data_pipeline",
+  "MaximumInteractions": null,
+  "StartAgentId": null,
+  "agents": [],
+  "agentMappings": [],
+  "partnerMetadata": {
+    "Description": "",
+    "Name": ""
+  }
+}
