@@ -1,0 +1,177 @@
+{
+  "Specification": {
+    "dataPipeline": {
+      "pipelineNodes": [
+        {
+          "metadata": {
+            "description": "Start of data pipeline",
+            "name": "Start"
+          },
+          "outcomes": {
+            "success": "1775285100115"
+          },
+          "code": "START",
+          "id": "start",
+          "inputs": [],
+          "type": "START"
+        },
+        {
+          "metadata": {
+            "description": "End of data pipeline",
+            "name": "End"
+          },
+          "outcomes": {},
+          "code": "END",
+          "id": "end",
+          "inputs": [],
+          "type": "END"
+        },
+        {
+          "metadata": {
+            "name": "INIT_VARS"
+          },
+          "outcomes": {
+            "success": "1775285722121"
+          },
+          "code": "INITVARS",
+          "id": "1775285100115",
+          "inputs": [
+            {
+              "id": "1775285114430",
+              "name": "myURL",
+              "type": "string",
+              "value": "'https://oic-vbcs-oic3-partners-vb-bots4saas.builder.ca-montreal-1.ocp.oraclecloud.com/ic/builder/rt/XX_AI_PRC_PURCHASE_OR/live/webApps/vbredwoodapp/?varPO='"
+            }
+          ],
+          "type": "SET_FIELDS"
+        },
+        {
+          "metadata": {
+            "name": "SET_VARS",
+            "returnType": "string",
+            "sourceCode": "let varCompleteURL= $context.$variables.myURL +$context.$triggers.REST.$input.targetName;\n\nreturn varCompleteURL;"
+          },
+          "outcomes": {
+            "success": "1775286173251"
+          },
+          "code": "SETVARS",
+          "id": "1775285722121",
+          "inputs": [],
+          "outputSpecification": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"result\": {\n      \"type\": \"object\"\n    },\n    \"timeout\": {\n      \"type\": \"boolean\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"output\",\n    \"timeout\",\n    \"error\"\n  ]\n}",
+          "type": "CODE"
+        },
+        {
+          "metadata": {
+            "name": "GENERATE_LINK"
+          },
+          "outcomes": {
+            "success": "end"
+          },
+          "code": "GENERATELINK",
+          "id": "1775286173251",
+          "inputs": [
+            {
+              "id": "1775286173259_1",
+              "name": "prompt",
+              "type": "string",
+              "value": "Generate a Plain HTML link using content of string variable {{$context.$nodes.SETVARS.$output.result}} \nProvide the generated HTML link to the user to navigate, prefix the link with the text \"Here you have your link:\""
+            }
+          ],
+          "type": "LLM"
+        }
+      ],
+      "rootNode": "start",
+      "variables": [
+        {
+          "id": "1775284377405",
+          "name": "myURL",
+          "type": "string"
+        }
+      ],
+      "errorHandlers": [
+        {
+          "type": "EMAIL",
+          "inputs": [
+            {
+              "name": "toList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "ccList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "subject",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "body",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        }
+      ]
+    },
+    "jsonSchemaName": "Workflow.spec",
+    "jsonSchemaVersion": "1",
+    "inputs": [],
+    "outputSpecification": " ",
+    "agentsValueMappings": [],
+    "humanApprovalFlag": false,
+    "triggers": [
+      {
+        "type": "REST",
+        "inputs": [
+          {
+            "dirtyFlag": true,
+            "editModeFlag": false,
+            "id": "1775284541012",
+            "name": "targetName",
+            "newVariableFlag": true,
+            "type": "string",
+            "value": ""
+          }
+        ]
+      }
+    ],
+    "deletedTriggerTypes": [],
+    "chatExpTPFileUploadEnabledFlag": false,
+    "chatExpThirdPartyDetails": []
+  },
+  "dependencies": {
+    "boFunctionNodes": [],
+    "agentNodes": [],
+    "workflowNodes": [],
+    "documentProcessorNodes": [],
+    "ragDocumentToolNodes": [],
+    "toolNodes": [],
+    "externalRestNodes": []
+  },
+  "WorkflowCode": "AA_NAVIGATE_VISUAL_BUILDER_PO",
+  "Name": "AA_NAVIGATE_VISUAL_BUILDER_PO",
+  "Description": "Navigate to a Visual Builder page",
+  "Family": "FIN",
+  "Product": "OTHER",
+  "HiddenFlag": false,
+  "UseCaseId": "NA",
+  "SourceWorkflowId": null,
+  "AccessModifier": "public",
+  "StartQuestionOne": null,
+  "StartQuestionTwo": null,
+  "StartQuestionThree": null,
+  "FollowUpPromptEnabledFlag": false,
+  "FollowUpPrompt": "Based on the following conversion: $param.system_context.chat_history generate $param.system_context.number_of_follow_up_questions\nfollow up questions only while strictly adhering to the JSON Schema format mentioned below. Remove the ```json markdown from the output.\nHere is the JSON Schema format the output should adhere to:\n[{\"question\": \"<put first question generated here>\"}, {\"question\": \"<put second question generated here>\"}, {\"question\": \"<put third question generated here>\"}",
+  "Architecture": "data_pipeline",
+  "MaximumInteractions": null,
+  "StartAgentId": null,
+  "agents": [],
+  "agentMappings": [],
+  "partnerMetadata": {
+    "Description": "",
+    "Name": ""
+  }
+}
