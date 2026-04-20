@@ -1,0 +1,670 @@
+{
+  "Specification": {
+    "dataPipeline": {
+      "pipelineNodes": [
+        {
+          "metadata": {
+            "description": "Start of data pipeline",
+            "name": "Start"
+          },
+          "outcomes": {
+            "success": "1776519162091"
+          },
+          "code": "START",
+          "id": "start",
+          "inputs": [],
+          "type": "START"
+        },
+        {
+          "metadata": {
+            "description": "End of data pipeline",
+            "name": "End"
+          },
+          "outcomes": {},
+          "code": "END",
+          "id": "end",
+          "inputs": [],
+          "type": "END"
+        },
+        {
+          "metadata": {
+            "name": "READ_SUPPLIER"
+          },
+          "outcomes": {
+            "success": "1776520014408"
+          },
+          "code": "READSUPPLIER",
+          "id": "1776519162091",
+          "inputs": [
+            {
+              "id": "1776519162098_1",
+              "name": "prompt",
+              "type": "string",
+              "value": "You will have two tasks.\n\n#Task 1.\nFind the supplier name from {{$context.$system.$inputMessage}} and store it in variable {{$context.$variables.SupplierName}} \n\n\n#Task 2.\nAction will have these possible values: \n1. SuppliersBasic.\n2. SuppliersPurchaseOrders.\n2. SuppliersPurchaseOrders_MCP.\nYou will derive the action from {{$context.$system.$inputMessage}} and store action in variable {{$context.$variables.Action}} \nSelect action = \"SuppliersBasic\" when user enter expressions like \"basic\", \"Basic\", \"basic supplier info\"\nSelect action = \"SuppliersPurchaseOrders\" when user enter expressions like \"show purchase orders\", \"show purchaseorders\", \"show purchase orders of supplier\"\nSelect action = \"SuppliersPurchaseOrders_MCP\" when user enter expressions like \"show purchase orders with MCP\", \"show purchaseorders  with MCP\", \"show purchase orders of supplier  with MCP\"\n \nStore it in  variable {{$context.$variables.Action}} \n\n\n\n\n"
+            }
+          ],
+          "outputSpecification": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"SupplierName\": {\n      \"type\": \"string\"\n    },\n    \"Action\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"SupplierName\"\n  ]\n}",
+          "type": "LLM"
+        },
+        {
+          "metadata": {
+            "name": "CHOOSE_ACTION"
+          },
+          "outcomes": {
+            "SuppliersBasic": "1776523989924",
+            "SuppliersPurchaseOrders": "1776527802495",
+            "SuppliersPurchaseOrders_MCP": "1776542764480"
+          },
+          "code": "CHOOSEACTION",
+          "convergenceTargetId": "end",
+          "id": "1776523123255",
+          "inputs": [
+            {
+              "id": "1776523123258_1",
+              "name": "caseExpression",
+              "type": "string",
+              "value": "{{$context.$nodes.READSUPPLIER.$output.Action}}"
+            }
+          ],
+          "type": "SWITCH"
+        },
+        {
+          "metadata": {
+            "name": "SHOW_SUPPLIER"
+          },
+          "outcomes": {
+            "success": "1776532115403"
+          },
+          "code": "SHOWSUPPLIER",
+          "id": "1776523989924",
+          "inputs": [
+            {
+              "id": "1776523989928_1",
+              "name": "prompt",
+              "type": "string",
+              "value": "Show the following variables in bulleted form:\n\nSupplierId: {{$context.$variables.SupplierId}} \nSupplierName: {{$context.$variables.SupplierName}}\nSupplierNumber:{{$context.$variables.SupplierNumber}}\n"
+            }
+          ],
+          "type": "LLM"
+        },
+        {
+          "metadata": {
+            "businessObjectCode": "ORA_PRC_SUPPLIER_COESUPPLIERSJJMR",
+            "functionName": "get_supplier_by_name",
+            "name": "SuppliersBasic"
+          },
+          "outcomes": {
+            "success": "1776524732119"
+          },
+          "code": "SUPPLIERSBASIC",
+          "convergenceTargetId": "1776523123255",
+          "id": "1776520014408",
+          "inputs": [
+            {
+              "id": "1776520048608_1",
+              "name": "pSupplierName",
+              "type": "string",
+              "value": "{{$context.$nodes.READSUPPLIER.$output.SupplierName}}"
+            }
+          ],
+          "outputSpecification": "{\n\t\"$schema\": \"http://json-schema.org/draft-04/schema#\",\n\t\"type\": \"array\",\n\t\"items\": {\n\t\t\"type\": \"object\",\n\t\t\"properties\": {\n\t\t\t\"SupplierId\": {\n\t\t\t\t\"type\": \"string\"\n\t\t\t},\n\t\t\t\"SupplierNumber\": {\n\t\t\t\t\"type\": \"string\"\n\t\t\t},\n\t\t\t\"Supplier\": {\n\t\t\t\t\"type\": \"string\"\n\t\t\t}\n\t\t},\n\t\t\"required\": [\n\t\t\t\"SupplierId\"\n\t\t]\n\t}\n}",
+          "type": "BO_FUNCTION"
+        },
+        {
+          "metadata": {
+            "name": "SET_FOUND_VARS"
+          },
+          "outcomes": {
+            "success": "1776523123255"
+          },
+          "code": "SETFOUNDVARS",
+          "convergenceTargetId": "1776523123255",
+          "id": "1776524732119",
+          "inputs": [
+            {
+              "id": "1776524816044",
+              "name": "SupplierId",
+              "scope": "JOB",
+              "type": "string",
+              "value": "{{$context.$nodes.SUPPLIERSBASIC.$output.items[0].SupplierId}}"
+            },
+            {
+              "id": "1776524768190",
+              "name": "SupplierName",
+              "scope": "JOB",
+              "type": "string",
+              "value": "{{$context.$nodes.SUPPLIERSBASIC.$output.items[0].Supplier}}"
+            },
+            {
+              "id": "1776524743438",
+              "name": "SupplierNumber",
+              "scope": "JOB",
+              "type": "string",
+              "value": "{{$context.$nodes.SUPPLIERSBASIC.$output.items[0].SupplierNumber}}"
+            }
+          ],
+          "type": "SET_FIELDS"
+        },
+        {
+          "metadata": {
+            "name": "ZA"
+          },
+          "outcomes": {
+            "success": "end"
+          },
+          "code": "ZA",
+          "id": "1776532115403",
+          "inputs": [
+            {
+              "id": "1776532127399",
+              "name": "DUMMY",
+              "scope": "JOB",
+              "type": "string",
+              "value": "4"
+            }
+          ],
+          "type": "SET_FIELDS"
+        },
+        {
+          "metadata": {
+            "externalRestToolCode": "AA_RUN_OIC_PO",
+            "functionName": "RUN_OIC",
+            "name": "AA_RUN_OIC_PO_ER"
+          },
+          "outcomes": {
+            "success": "1776542846091"
+          },
+          "code": "AA_RUN_OIC_PO_ER",
+          "convergenceTargetId": "1776527683918",
+          "id": "1776527802495",
+          "inputs": [
+            {
+              "id": "1776527817463_1",
+              "name": "p_supplier_id",
+              "type": "string",
+              "value": "{{$context.$variables.SupplierId}}"
+            }
+          ],
+          "outputSpecification": "{}",
+          "type": "EXTERNAL_REST"
+        },
+        {
+          "metadata": {
+            "name": "ASSIGN_DUMMY"
+          },
+          "outcomes": {
+            "success": "end"
+          },
+          "code": "ASSIGNDUMMY",
+          "id": "1776542764480",
+          "inputs": [
+            {
+              "id": "1776542773856",
+              "name": "DUMMY",
+              "scope": "JOB",
+              "type": "string",
+              "value": "3"
+            }
+          ],
+          "type": "SET_FIELDS"
+        },
+        {
+          "metadata": {
+            "name": "SHOW_TABLE_1"
+          },
+          "outcomes": {
+            "success": "end"
+          },
+          "code": "SHOWTABLE1",
+          "id": "1776542846091",
+          "inputs": [
+            {
+              "id": "1776542846097_1",
+              "name": "prompt",
+              "type": "string",
+              "value": "Show data from {{$context.$nodes.AA_RUN_OIC_PO_ER.$output}} in HTML table.\nWe need the display of HTML no the HTML code.\nDisplay dates in format YYYY-MMM-DD"
+            }
+          ],
+          "type": "LLM"
+        }
+      ],
+      "rootNode": "start",
+      "variables": [
+        {
+          "id": "1776524704942",
+          "name": "SupplierNumber",
+          "scope": "CONVERSATION",
+          "type": "string"
+        },
+        {
+          "id": "1776523389772",
+          "name": "DUMMY",
+          "scope": "JOB",
+          "type": "string"
+        },
+        {
+          "id": "1776522838944",
+          "name": "Action",
+          "scope": "CONVERSATION",
+          "type": "string"
+        },
+        {
+          "id": "1776519759937",
+          "name": "SupplierId",
+          "scope": "CONVERSATION",
+          "type": "string"
+        },
+        {
+          "id": "1776519613127",
+          "name": "SupplierName",
+          "scope": "CONVERSATION",
+          "type": "string"
+        }
+      ],
+      "errorHandlers": [
+        {
+          "type": "EMAIL",
+          "inputs": [
+            {
+              "name": "toList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "ccList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "subject",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "body",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        }
+      ]
+    },
+    "jsonSchemaName": "Workflow.spec",
+    "jsonSchemaVersion": "1",
+    "inputs": [],
+    "outputSpecification": " ",
+    "agentsValueMappings": [],
+    "modelConfiguration": null,
+    "humanApprovalFlag": false,
+    "waitFlag": false,
+    "triggers": [
+      {
+        "type": "REST",
+        "inputs": []
+      }
+    ],
+    "deletedTriggerTypes": [],
+    "costSavings": 0,
+    "timeSavings": 10,
+    "chatExpTPFileUploadEnabledFlag": false,
+    "chatExpThirdPartyDetails": []
+  },
+  "dependencies": {
+    "boFunctionNodes": [
+      {
+        "ObjectProperties": {
+          "jsonSchemaName": "SupportedBusinessObject.objectProperties",
+          "jsonSchemaVersion": 1,
+          "tools": [
+            {
+              "headers": {
+                "Content-Type": "application/vnd.oracle.adf.action+json"
+              },
+              "bodyTemplate": "{\n\t\"Supplier\": \"{pSupplier}\",\n\t\"TaxOrganizationType\": \"{pTaxOrganizationType}\",\n\t\"SupplierType\": \"{pSupplierType}\",\n\t\"BusinessRelationship\": \"{pBusinessRelationship}\",\n\t\"DUNSNumber\": \"{pDUNSNumber}\",\n\t\"TaxpayerCountry\": \"{pTaxpayerCountry}\",\n\t\"TaxpayerId\": \"{pTaxpayerId}\" \n}",
+              "description": "Create one supplier",
+              "id": 9,
+              "isNew": true,
+              "name": "create_supplier",
+              "operationType": "POST",
+              "parameterDefinitions": [
+                {
+                  "dataType": "string",
+                  "description": "Supplier",
+                  "id": 539,
+                  "isToken": true,
+                  "name": "pSupplier"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Tax Organization Type",
+                  "id": 540,
+                  "isToken": true,
+                  "name": "pTaxOrganizationType"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Supplier Type",
+                  "id": 541,
+                  "isToken": true,
+                  "name": "pSupplierType"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Business Relationship",
+                  "id": 542,
+                  "isToken": true,
+                  "name": "pBusinessRelationship"
+                },
+                {
+                  "dataType": "string",
+                  "description": "DUNS Number",
+                  "id": 543,
+                  "isToken": true,
+                  "name": "pDUNSNumber"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Taxpayer Country",
+                  "id": 544,
+                  "isToken": true,
+                  "name": "pTaxpayerCountry"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Taxpayer Id",
+                  "id": 545,
+                  "isToken": true,
+                  "name": "pTaxpayerId"
+                }
+              ],
+              "resourcePath": "/fscmRestApi/resources/11.13.18.05/suppliers",
+              "resourceType": "ADF_BC_FIXED_QUERY",
+              "sampleQueries": [
+                {
+                  "query": {
+                    "Supplier": "Tall Manufacturing 0001",
+                    "TaxOrganizationType": "Corporation",
+                    "SupplierType": "Services",
+                    "BusinessRelationship": "Prospective",
+                    "DUNSNumber": "221134514",
+                    "TaxpayerCountry": "United States",
+                    "TaxpayerId": "98-01376374"
+                  },
+                  "description": "Sample payload for creating a supplier",
+                  "id": 531,
+                  "stringValue": "{\"Supplier\":\"Tall Manufacturing 0001\",\"TaxOrganizationType\":\"Corporation\",\"SupplierType\":\"Services\",\"BusinessRelationship\":\"Prospective\",\"DUNSNumber\":\"221134514\",\"TaxpayerCountry\":\"United States\",\"TaxpayerId\":\"98-01376374\"}"
+                }
+              ],
+              "type": "BUS_OBJECT",
+              "useNativeAuthentication": true
+            },
+            {
+              "bodyTemplate": "",
+              "description": "Get Supplier By Name",
+              "id": 10,
+              "isNew": true,
+              "name": "get_supplier_by_name",
+              "operationType": "GET",
+              "parameterDefinitions": [
+                {
+                  "dataType": "string",
+                  "description": "Supplier Name",
+                  "id": 15,
+                  "isToken": true,
+                  "name": "pSupplierName"
+                }
+              ],
+              "resourcePath": "/fscmRestApi/resources/11.13.18.05/suppliers?q=Supplier='{pSupplierName}'&fields=SupplierId,SupplierNumber,Supplier&onlyData=true",
+              "resourceType": "ADF_BC_FIXED_QUERY",
+              "sampleQueries": [],
+              "type": "BUS_OBJECT",
+              "useNativeAuthentication": true
+            },
+            {
+              "headers": {
+                "Content-Type": "application/vnd.oracle.adf.action+json"
+              },
+              "bodyTemplate": "",
+              "description": "Get all suppliers",
+              "id": 11,
+              "isNew": true,
+              "name": "get_5_suppliers",
+              "operationType": "GET",
+              "parameterDefinitions": [
+                {
+                  "dataType": "string",
+                  "description": "Offset to fetch next page",
+                  "id": 442,
+                  "isToken": true,
+                  "name": "offset"
+                },
+                {
+                  "dataType": "integer",
+                  "description": "Supplier Id",
+                  "id": 443,
+                  "isToken": false,
+                  "name": "SupplierId"
+                },
+                {
+                  "dataType": "integer",
+                  "description": "Supplier Party ID",
+                  "id": 444,
+                  "isToken": false,
+                  "name": "SupplierPartyId"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Supplier",
+                  "id": 445,
+                  "isToken": false,
+                  "name": "Supplier"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Supplier Number",
+                  "id": 446,
+                  "isToken": false,
+                  "name": "SupplierNumber"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Business Relationship",
+                  "id": 447,
+                  "isToken": false,
+                  "name": "BusinessRelationship"
+                }
+              ],
+              "resourcePath": "/fscmRestApi/resources/11.13.18.05/suppliers?onlyData=true&totalResults=true&limit=5&offset={offset}&orderBy=SupplierNumber:desc",
+              "resourceType": "ADF_BC_FIXED_QUERY",
+              "sampleQueries": [],
+              "type": "BUS_OBJECT",
+              "useNativeAuthentication": true
+            },
+            {
+              "headers": {
+                "Content-Type": "application/vnd.oracle.adf.action+json"
+              },
+              "bodyTemplate": "",
+              "description": "Get all suppliers",
+              "id": 12,
+              "name": "getall_suppliers",
+              "operationType": "GET",
+              "parameterDefinitions": [
+                {
+                  "dataType": "string",
+                  "description": "fetch size",
+                  "id": 413,
+                  "isToken": true,
+                  "name": "limit"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Offset to fetch next page",
+                  "id": 414,
+                  "isToken": true,
+                  "name": "offset"
+                },
+                {
+                  "dataType": "integer",
+                  "description": "Supplier Id",
+                  "id": 415,
+                  "isToken": false,
+                  "name": "SupplierId"
+                },
+                {
+                  "dataType": "integer",
+                  "description": "Supplier Party ID",
+                  "id": 416,
+                  "isToken": false,
+                  "name": "SupplierPartyId"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Supplier",
+                  "id": 417,
+                  "isToken": false,
+                  "name": "Supplier"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Supplier Number",
+                  "id": 418,
+                  "isToken": false,
+                  "name": "SupplierNumber"
+                },
+                {
+                  "dataType": "string",
+                  "description": "Business Relationship",
+                  "id": 419,
+                  "isToken": false,
+                  "name": "BusinessRelationship"
+                }
+              ],
+              "resourcePath": "/fscmRestApi/resources/11.13.18.05/suppliers?onlyData=true&totalResults=true&limit={limit}&offset={offset}&orderBy=SupplierNumber:desc",
+              "resourceType": "ADF_BC_FIXED_QUERY",
+              "sampleQueries": [],
+              "type": "BUS_OBJECT",
+              "useNativeAuthentication": true
+            }
+          ]
+        },
+        "ObjectCode": "ORA_PRC_SUPPLIER_COESUPPLIERSJJMR",
+        "Family": "PRC",
+        "Product": "SUPPLIER",
+        "ObjectSource": "ADF_BC",
+        "Category": null,
+        "RestResourcePath": "/fscmRestApi/resources/11.13.18.05/suppliers",
+        "RestResourceIdentifier": "identifier_not_known",
+        "RestSupportedOperations": "{\"allowedOperations\": {\"GET\": true, \"POST\": true, \"PATCH\": true, \"DELETE\": true}}",
+        "ParentSupptObjectId": null,
+        "MandatoryFlag": false,
+        "SeededFlag": false,
+        "ObjectDisplayName": "COE Suppliers_JJMR",
+        "Name": "COE Suppliers_JJMR",
+        "Description": "This business object manages suppliers information.",
+        "CreatedBy": "Sophia.Grant",
+        "CreationDate": "2026-04-18T13:27:48.059+00:00"
+      }
+    ],
+    "agentNodes": [],
+    "workflowNodes": [],
+    "documentProcessorNodes": [],
+    "ragDocumentToolNodes": [],
+    "toolNodes": [],
+    "externalRestNodes": [
+      {
+        "Specification": {
+          "businessObjectMetadata": {
+            "functions": []
+          },
+          "externalRestMetadata": {
+            "authInfo": {
+              "type": "basic",
+              "credentialKey": "FAI_EXT_REST_AA_RUN_OIC_PO",
+              "userName": "juanje"
+            },
+            "endpoints": [
+              {
+                "headers": {},
+                "description": "Run OIC integration to get purchase orders data",
+                "name": "RUN_OIC",
+                "operationType": "POST",
+                "parameterDefinitions": [
+                  {
+                    "dataType": "string",
+                    "description": "Supplier id",
+                    "name": "p_supplier_id",
+                    "isToken": true
+                  }
+                ],
+                "resourcePath": "/ic/api/integration/v2/flows/rest/project/AA_AI_AGENT_01/XX_GET_DATA_FROM_BIP/1.0/",
+                "bodyTemplate": "{\n  \"p_supplier_id\": \"{p_supplier_id}\"\n}",
+                "sampleQueries": [
+                  {
+                    "description": "Payload",
+                    "query": "{\n  \"p_supplier_id\": \"300000047414503\"\n}"
+                  }
+                ]
+              }
+            ],
+            "instanceURL": "https://oic3-partners-bots4saas-yu.integration.ca-montreal-1.ocp.oraclecloud.com"
+          },
+          "mcpConfig": {
+            "tools": []
+          },
+          "kmConnectorConfig": {},
+          "ragDocumentMetadata": {
+            "authorization": {},
+            "content": {},
+            "contentArray": []
+          },
+          "uiInput": {
+            "uiPatternSpec": "YES/NO"
+          }
+        },
+        "ToolCode": "AA_RUN_OIC_PO",
+        "Type": "EXTERNAL_REST",
+        "SubType": null,
+        "Name": "AA_RUN_OIC_PO",
+        "Description": "Run OIC integration to get purchase orders data.",
+        "Family": "FIN",
+        "Product": "OTHER",
+        "ToolCreatedDate": "2026-04-18",
+        "OwnerId": null,
+        "OwnerName": null,
+        "Status": "PUBLISHED",
+        "SeededFlag": false,
+        "HiddenFlag": false,
+        "ModuleId": null,
+        "Namespace": "FIN.OTHER",
+        "Version": 1,
+        "UserInputRequiredFlag": false,
+        "UserInputMsg": null
+      }
+    ]
+  },
+  "WorkflowCode": "AA_DEMO_MCP_OIC_SUPP",
+  "Name": "AA_DEMO_MCP_OIC_SUPP",
+  "Description": "Agent that shows supplier information.",
+  "Family": "FIN",
+  "Product": "OTHER",
+  "HiddenFlag": false,
+  "AiAppsCompatibleFlag": null,
+  "UseCaseId": "NA",
+  "SourceWorkflowId": null,
+  "AccessModifier": "public",
+  "StartQuestionOne": "Show basic information for supplier \"Lee Supplies\"",
+  "StartQuestionTwo": "Show purchase orders information for supplier \"Lee Supplies\"",
+  "StartQuestionThree": "Show purchase orders information for supplier \"Lee Supplies\" with MCP",
+  "FollowUpPromptEnabledFlag": false,
+  "FollowUpPrompt": "Based on the following conversion: $param.system_context.chat_history generate $param.system_context.number_of_follow_up_questions\nfollow up questions only while strictly adhering to the JSON Schema format mentioned below. Remove the ```json markdown from the output.\nHere is the JSON Schema format the output should adhere to:\n[{\"question\": \"<put first question generated here>\"}, {\"question\": \"<put second question generated here>\"}, {\"question\": \"<put third question generated here>\"}",
+  "Architecture": "data_pipeline",
+  "MaximumInteractions": null,
+  "StartAgentId": null,
+  "agents": [],
+  "agentMappings": [],
+  "partnerMetadata": {
+    "Description": "",
+    "Name": ""
+  }
+}
