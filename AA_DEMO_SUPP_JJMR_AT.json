@@ -1,0 +1,250 @@
+{
+  "Specification": {
+    "dataPipeline": {
+      "pipelineNodes": [
+        {
+          "metadata": {
+            "description": "Start of data pipeline",
+            "name": "Start"
+          },
+          "outcomes": {
+            "success": "1777044495502"
+          },
+          "code": "START",
+          "id": "start",
+          "inputs": [],
+          "type": "START"
+        },
+        {
+          "metadata": {
+            "description": "End of data pipeline",
+            "name": "End"
+          },
+          "outcomes": {},
+          "code": "END",
+          "id": "end",
+          "inputs": [],
+          "type": "END"
+        },
+        {
+          "aiAppOutputSpecification": {
+            "dataDisplay": {
+              "layouts": [
+                "ORA_LAYOUT_MULTIRECORD"
+              ],
+              "enableActions": true,
+              "enableCommunications": false
+            }
+          },
+          "metadata": {
+            "name": "DISPLAY_SUPPLIERS"
+          },
+          "outcomes": {
+            "success": "end"
+          },
+          "code": "DISPLAYSUPPLIERS",
+          "id": "1776796232300",
+          "inputs": [
+            {
+              "id": "1776796232307_1",
+              "name": "prompt",
+              "type": "string",
+              "value": "Using the data from {{$context.$nodes.XXBOFSUPPLIERS.$output.items}}  , generate a table for a MultiRecord widget\n\nUse a MultiRecord widget to display suppliers list : \nfor Supplier Id , show SupplierId; for Supplier show Supplier ;  for SupplierNumber show SupplierNumber; for SupplierType , show SupplierType;  for InactiveDate show InactiveDate;  for Status show Status. \nfor Status_Badge\n   Display status as a badge:\n      - type: success if status is ACTIVE\n      - type: warning if status is not ACTIVE\n\n\nDo not show any other fields in the MultiRecord widget.\n\nWidget display format:\n\n<oraInfoDisplay key=\"list-1687632000\">{\n    \"title\": \"Suppliers\",\n    \"patternId\": \"multiRecordWidget\",\n    \"description\": \"List of suppliers\",\n    \"properties\": {\n        \"subtitle\": \"Suppliers\",\n        \"cols\": [\"Supplier id\", \"Supplier \", \"Supplier\" , \"SupplierType\" , \"InactiveDate\" , \"Status\" ],\n        \"rows\": [\n    {\n        \"cells\": [\n            \"<Supplier Id r to be replaced>\",\n            \"<Supplier to be replaced>\",\n\t\t\t\"<SupplierType to be replaced>\",\n\t\t\t\"<InactiveDate to be replaced>\",\n\t\t\t\"<Status to be replaced>\",\n            \"<Supplier Number to be replaced>\"\n        ]\n    }\n]\n    }\n}</oraInfoDisplay>"
+            }
+          ],
+          "type": "LLM"
+        },
+        {
+          "metadata": {
+            "businessObjectCode": "ORA_PRC_SUPPLIER_XXDEMOSUPPLIERS2",
+            "functionName": "getall_suppliers",
+            "name": "XX_BOF_SUPPLIERS"
+          },
+          "outcomes": {
+            "success": "1776796232300"
+          },
+          "code": "XXBOFSUPPLIERS",
+          "id": "1776796847745",
+          "inputs": [
+            {
+              "id": "1777044179058_1",
+              "name": "SupplierName",
+              "type": "string",
+              "value": "{{$context.$system.$inputMessage}}"
+            }
+          ],
+          "outputSpecification": "{\n\t\"$schema\": \"http://json-schema.org/draft-07/schema#\",\n\t\"title\": \"suppliers\",\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"suppliers\": {\n\t\t\t\"type\": \"array\",\n\t\t\t\"items\": {\n\t\t\t\t\"type\": \"object\",\n\t\t\t\t\"properties\": {\n\t\t\t\t\t\"SupplierId\": {\n\t\t\t\t\t\t\"type\": \"string\"\n\t\t\t\t\t},\n\t\t\t\t\t\"SupplierNumber\": {\n\t\t\t\t\t\t\"type\": \"string\"\n\t\t\t\t\t},\n\t\t\t\t\t\"SupplierType\": {\n\t\t\t\t\t\t\"type\": \"string\"\n\t\t\t\t\t},\n\t\t\t\t\t\"InactiveDate\": {\n\t\t\t\t\t\t\"type\": \"string\"\n\t\t\t\t\t},\n\t\t\t\t\t\"Status\": {\n\t\t\t\t\t\t\"type\": \"string\"\n\t\t\t\t\t},\n\t\t\t\t\t\"Supplier\": {\n\t\t\t\t\t\t\"type\": \"string\"\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}",
+          "type": "BO_FUNCTION"
+        },
+        {
+          "metadata": {
+            "name": "ASSIGN_SUPPLIER"
+          },
+          "outcomes": {
+            "success": "1776796847745"
+          },
+          "code": "ASSIGNSUPPLIER",
+          "id": "1777044495502",
+          "inputs": [
+            {
+              "id": "1777045835453",
+              "name": "varDummy",
+              "scope": "JOB",
+              "type": "string",
+              "value": "{{$context.$app.$OraMessageHint}}"
+            },
+            {
+              "id": "1777044505949",
+              "name": "varSupplier",
+              "scope": "JOB",
+              "type": "string",
+              "value": "{{$context.$app.$OraMessageHint}}"
+            }
+          ],
+          "type": "SET_FIELDS"
+        }
+      ],
+      "rootNode": "start",
+      "variables": [
+        {
+          "id": "1777045807311",
+          "name": "varDummy",
+          "scope": "JOB",
+          "type": "string"
+        },
+        {
+          "id": "1776971033510",
+          "name": "varSupplier",
+          "scope": "CONVERSATION",
+          "type": "string"
+        }
+      ],
+      "errorHandlers": [
+        {
+          "type": "EMAIL",
+          "inputs": [
+            {
+              "name": "toList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "ccList",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "subject",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "name": "body",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        }
+      ]
+    },
+    "jsonSchemaName": "Workflow.spec",
+    "jsonSchemaVersion": "1",
+    "inputs": [],
+    "outputSpecification": " ",
+    "agentsValueMappings": [],
+    "modelConfiguration": null,
+    "humanApprovalFlag": false,
+    "waitFlag": false,
+    "triggers": [
+      {
+        "type": "REST",
+        "inputs": []
+      }
+    ],
+    "costSavings": 0,
+    "timeSavings": 10,
+    "chatExpTPFileUploadEnabledFlag": false,
+    "chatExpThirdPartyDetails": [],
+    "policyIds": []
+  },
+  "dependencies": {
+    "boFunctionNodes": [
+      {
+        "ObjectProperties": {
+          "jsonSchemaName": "SupportedBusinessObject.objectProperties",
+          "jsonSchemaVersion": 1,
+          "tools": [
+            {
+              "bodyTemplate": "",
+              "description": "Get all suppliers",
+              "id": 0,
+              "isNew": true,
+              "name": "getall_suppliers",
+              "operationType": "GET",
+              "parameterDefinitions": [
+                {
+                  "dataType": "string",
+                  "description": "SupplierName",
+                  "id": 3,
+                  "isToken": true,
+                  "name": "SupplierName"
+                }
+              ],
+              "resourcePath": "/fscmRestApi/resources/11.13.18.05/suppliers?limit=25&fields=SupplierId,Supplier,SupplierNumber,SupplierType,InactiveDate,Status&q=Supplier like'%{SupplierName}%' &onlyData=true",
+              "resourceType": "ADF_BC_FIXED_QUERY",
+              "sampleQueries": [],
+              "type": "BUS_OBJECT",
+              "useNativeAuthentication": true
+            }
+          ]
+        },
+        "ObjectCode": "ORA_PRC_SUPPLIER_XXDEMOSUPPLIERS2",
+        "Family": "PRC",
+        "Product": "SUPPLIER",
+        "ObjectSource": "ADF_BC",
+        "Category": null,
+        "RestResourcePath": "/fscmRestApi/resources/11.13.18.05/suppliers",
+        "RestResourceIdentifier": "identifier_not_known",
+        "RestSupportedOperations": "{\"allowedOperations\": {\"GET\": true, \"POST\": true, \"PATCH\": true, \"DELETE\": true}}",
+        "ParentSupptObjectId": null,
+        "MandatoryFlag": false,
+        "SeededFlag": false,
+        "ObjectDisplayName": "XX_DEMO_SUPPLIERS2",
+        "Name": "XX_DEMO_SUPPLIERS2",
+        "Description": "Get suppliers",
+        "CreatedBy": "Fiona.Lawson",
+        "CreationDate": "2026-04-23T18:45:36.926+00:00"
+      }
+    ],
+    "agentNodes": [],
+    "workflowNodes": [],
+    "documentProcessorNodes": [],
+    "ragDocumentToolNodes": [],
+    "toolNodes": [],
+    "externalRestNodes": []
+  },
+  "WorkflowCode": "AA_DEMO_SUPP_JJMR_AT",
+  "Name": "AA_DEMO_SUPP_JJMR_AT",
+  "Description": "You are an agent able to show suppliers",
+  "Family": "PRC",
+  "Product": "SUPPLIER",
+  "HiddenFlag": false,
+  "AiAppsCompatibleFlag": true,
+  "UseCaseId": "NA",
+  "SourceWorkflowId": null,
+  "AccessModifier": "public",
+  "StartQuestionOne": null,
+  "StartQuestionTwo": null,
+  "StartQuestionThree": null,
+  "FollowUpPromptEnabledFlag": false,
+  "FollowUpPrompt": "Based on the following conversion: $param.system_context.chat_history generate $param.system_context.number_of_follow_up_questions\nfollow up questions only while strictly adhering to the JSON Schema format mentioned below. Remove the ```json markdown from the output.\nHere is the JSON Schema format the output should adhere to:\n[{\"question\": \"<put first question generated here>\"}, {\"question\": \"<put second question generated here>\"}, {\"question\": \"<put third question generated here>\"}",
+  "Architecture": "data_pipeline",
+  "MaximumInteractions": null,
+  "StartAgentId": null,
+  "agents": [],
+  "agentMappings": [],
+  "partnerMetadata": {
+    "Description": "",
+    "Name": ""
+  }
+}

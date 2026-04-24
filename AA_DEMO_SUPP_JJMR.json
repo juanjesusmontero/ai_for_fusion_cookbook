@@ -1,0 +1,9 @@
+{
+  "name": "AA_DEMO_SUPP_JJMR",
+  "code": "AA_DEMO_SUPP_JJMR",
+  "specification": "{\"applicationMetadata\":{\"title\":\"Suppliers.\",\"pagePattern\":\"swimlanesPattern\",\"pageConfig\":{\"agentContainers\":[{\"id\":\"container-1776797794079\",\"title\":\"Suppliers panel\",\"agents\":[\"agent-1776797794079\"]}],\"layout\":\"1\",\"firstLane\":[\"container-1776797794079\"],\"secondLane\":[]},\"agents\":{\"agent-1776797794079\":{\"agent\":\"AA_DEMO_SUPP_JJMR_AT\",\"name\":\"AA_DEMO_JJMR\",\"description\":\"You are an agent able to show 5 suppliers\",\"includeInSummary\":false,\"includeInActions\":false,\"includeInCommunications\":false,\"summaryPrompt\":\"\"}},\"communications\":[],\"subTitle\":\"Suppliers subtitle\"}}",
+  "internalName": "AA_DEMO_SUPP_JJMR",
+  "version": 1,
+  "internalDescription": "Show suppliers",
+  "status": "DRAFT"
+}
