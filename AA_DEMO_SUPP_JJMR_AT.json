@@ -58,6 +58,7 @@
           "metadata": {
             "businessObjectCode": "ORA_PRC_SUPPLIER_XXDEMOSUPPLIERS2",
             "functionName": "getall_suppliers",
+            "processJson": false,
             "name": "XX_BOF_SUPPLIERS"
           },
           "outcomes": {
@@ -67,10 +68,10 @@
           "id": "1776796847745",
           "inputs": [
             {
-              "id": "1777044179058_1",
+              "id": "1777129211017_1",
               "name": "SupplierName",
               "type": "string",
-              "value": "{{$context.$system.$inputMessage}}"
+              "value": "{{$context.$variables.varSupplier}}"
             }
           ],
           "outputSpecification": "{\n\t\"$schema\": \"http://json-schema.org/draft-07/schema#\",\n\t\"title\": \"suppliers\",\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"suppliers\": {\n\t\t\t\"type\": \"array\",\n\t\t\t\"items\": {\n\t\t\t\t\"type\": \"object\",\n\t\t\t\t\"properties\": {\n\t\t\t\t\t\"SupplierId\": {\n\t\t\t\t\t\t\"type\": \"string\"\n\t\t\t\t\t},\n\t\t\t\t\t\"SupplierNumber\": {\n\t\t\t\t\t\t\"type\": \"string\"\n\t\t\t\t\t},\n\t\t\t\t\t\"SupplierType\": {\n\t\t\t\t\t\t\"type\": \"string\"\n\t\t\t\t\t},\n\t\t\t\t\t\"InactiveDate\": {\n\t\t\t\t\t\t\"type\": \"string\"\n\t\t\t\t\t},\n\t\t\t\t\t\"Status\": {\n\t\t\t\t\t\t\"type\": \"string\"\n\t\t\t\t\t},\n\t\t\t\t\t\"Supplier\": {\n\t\t\t\t\t\t\"type\": \"string\"\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}",
@@ -98,7 +99,7 @@
               "name": "varSupplier",
               "scope": "JOB",
               "type": "string",
-              "value": "{{$context.$app.$OraMessageHint}}"
+              "value": "{{$context.$system.$inputMessage}}"
             }
           ],
           "type": "SET_FIELDS"
@@ -190,7 +191,7 @@
                   "name": "SupplierName"
                 }
               ],
-              "resourcePath": "/fscmRestApi/resources/11.13.18.05/suppliers?limit=25&fields=SupplierId,Supplier,SupplierNumber,SupplierType,InactiveDate,Status&q=Supplier like'%{SupplierName}%' &onlyData=true",
+              "resourcePath": "/fscmRestApi/resources/11.13.18.05/suppliers?limit=25&fields=SupplierId,Supplier,SupplierNumber,SupplierType,InactiveDate,Status&q=upper(Supplier) like upper('%{SupplierName}%') &onlyData=true",
               "resourceType": "ADF_BC_FIXED_QUERY",
               "sampleQueries": [],
               "type": "BUS_OBJECT",
